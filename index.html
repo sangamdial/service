@@ -325,6 +325,14 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
  .auth-desktop-form{padding:60px 70px;display:flex;align-items:center}.auth-desktop-card{width:100%;max-width:480px;margin:auto}.auth-desktop-card .auth-title{font-size:31px}.auth-desktop-card .auth-subtitle{font-size:12px;margin-bottom:24px}.auth-desktop-card .auth-google{height:54px}.auth-desktop-card .auth-action{height:54px}.auth-desktop-card .auth-phone-row input{height:54px}.auth-desktop-card .auth-country{height:54px}
 }
 @media(max-width:899px){.auth-desktop{display:none}}
+.auth-recaptcha{margin-top:11px;min-height:78px;display:flex;justify-content:center;overflow:hidden;border-radius:10px}
+.auth-recaptcha:empty{display:none}
+.auth-recaptcha iframe{max-width:100%}
+.auth-sms-note{font-size:9px;color:#888;line-height:1.45;margin-top:8px}
+.auth-resend{background:none;border:0;color:#6d35df;font-size:10px;font-weight:900;padding:8px 0;display:none}
+.auth-resend.show{display:block}
+.auth-phone-verified{font-size:9px;color:#159d5f;font-weight:800;margin-top:5px}
+
 .auth-loading{position:fixed;inset:0;z-index:1200;background:linear-gradient(145deg,#ee3181,#6d35df 60%,#258de8);display:flex;align-items:center;justify-content:center;color:#fff}.auth-loading.hide{display:none}.auth-loading-inner{text-align:center}.auth-loading-logo{font-size:70px}.auth-loading h2{margin:12px 0 4px;font-size:27px}.auth-loading p{font-size:11px;opacity:.85}.auth-spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}@keyframes spin{to{transform:rotate(360deg)}}
 
 </style>
@@ -342,9 +350,9 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
     <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
     <div class="auth-divider"><span>OR</span></div>
     <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneMobile" inputmode="tel" autocomplete="tel" placeholder="Mobile number"></div>
-    <div id="recaptchaMobile"></div>
+    <div id="recaptchaMobile" class="auth-recaptcha"></div><div class="auth-sms-note">You may receive an SMS containing a one-time verification code. Standard SMS charges may apply.</div>
     <button id="phoneSendMobile" class="auth-action purple" onclick="firebaseSendOTP('mobile')">Send OTP&nbsp; →</button>
-    <div id="otpMobile" class="auth-otp"><div style="height:9px"></div><input id="authOtpMobile" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('mobile')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('mobile')">Change number</button></div>
+    <div id="otpMobile" class="auth-otp"><div style="height:9px"></div><input id="authOtpMobile" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('mobile')">Verify & Sign In</button><button id="resendMobile" class="auth-resend" onclick="firebaseSendOTP('mobile',true)">Resend OTP</button><button class="auth-change" onclick="resetPhoneLogin('mobile')">Change number</button></div>
     <div class="auth-note">By continuing, you agree to use Firebase Authentication for secure account sign-in.</div>
    </div>
   </div>
@@ -360,9 +368,9 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
     <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
     <div class="auth-divider"><span>OR CONTINUE WITH PHONE</span></div>
     <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneDesktop" inputmode="tel" autocomplete="tel" placeholder="10 digit mobile number"></div>
-    <div id="recaptchaDesktop"></div>
+    <div id="recaptchaDesktop" class="auth-recaptcha"></div><div class="auth-sms-note">You may receive an SMS containing a one-time verification code. Standard SMS charges may apply.</div>
     <button id="phoneSendDesktop" class="auth-action purple" onclick="firebaseSendOTP('desktop')">Send OTP&nbsp; →</button>
-    <div id="otpDesktop" class="auth-otp"><div style="height:10px"></div><input id="authOtpDesktop" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('desktop')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('desktop')">Change number</button></div>
+    <div id="otpDesktop" class="auth-otp"><div style="height:10px"></div><input id="authOtpDesktop" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('desktop')">Verify & Sign In</button><button id="resendDesktop" class="auth-resend" onclick="firebaseSendOTP('desktop',true)">Resend OTP</button><button class="auth-change" onclick="resetPhoneLogin('desktop')">Change number</button></div>
     <div class="auth-note">Your account data is stored in Cloud Firestore and synced in real time after login.</div>
    </div></section>
   </div>
@@ -392,6 +400,8 @@ let CLOUD_LISTENER = null;
 let CLOUD_WRITE_TIMER = null;
 let PHONE_CONFIRMATION = {mobile:null,desktop:null};
 let PHONE_RECAPTCHA = {mobile:null,desktop:null};
+let PHONE_COOLDOWN = {mobile:0,desktop:0};
+let PHONE_COOLDOWN_TIMER = {mobile:null,desktop:null};
 
 
 const firebaseConfig = {
@@ -480,12 +490,12 @@ async function hydrateCloudUser(user){
  const ref=cloudUserRef();
  let snap=await ref.get();
  if(!snap.exists){
-   DB=normalizeCloudData({user:{name:user.displayName||"",email:user.email||"",phone:user.phoneNumber||"",avatar:initials(user.displayName||"U"),profileComplete:false}});
+   DB=normalizeCloudData({user:{name:user.displayName||"",email:user.email||"",phone:user.phoneNumber||"",avatar:initials(user.displayName||"U"),profileComplete:false,authProvider:user.providerData?.[0]?.providerId||"unknown",authUid:user.uid,phoneVerified:!!user.phoneNumber}});
    await ref.set({uid:user.uid,user:DB.user,addresses:[],bookings:[],notifications:[],support:[],settings:DB.settings,meta:DB.meta,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
  }else{
    const cloud=normalizeCloudData(snap.data());
    DB=await mergeLocalIntoCloud(user.uid,cloud);
-   DB.user={...DB.user,email:DB.user.email||user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
+   DB.user={...DB.user,email:DB.user.email||user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U"),authProvider:user.providerData?.[0]?.providerId||"unknown",authUid:user.uid,phoneVerified:!!user.phoneNumber};
    saveState(false);
  }
  // Real-time single-document sync keeps profile + bookings + support + notifications synchronized across devices.
@@ -510,10 +520,30 @@ function resetRecaptcha(mode){
  PHONE_RECAPTCHA[mode]=null;
  const box=document.getElementById(recaptchaId(mode));if(box)box.innerHTML="";
 }
-function createRecaptcha(mode){
+async function createRecaptcha(mode){
  resetRecaptcha(mode);
- PHONE_RECAPTCHA[mode]=new firebase.auth.RecaptchaVerifier(recaptchaId(mode),{size:"invisible",callback:()=>{},"expired-callback":()=>{}});
+ const container=document.getElementById(recaptchaId(mode));
+ if(!container)throw new Error("reCAPTCHA container not found");
+ PHONE_RECAPTCHA[mode]=new firebase.auth.RecaptchaVerifier(container,{
+   size:"normal",
+   callback:()=>{ clearAuthError(); },
+   "expired-callback":()=>{ showAuthError("reCAPTCHA expired. Please complete it again."); }
+ });
+ await PHONE_RECAPTCHA[mode].render();
  return PHONE_RECAPTCHA[mode];
+}
+function resendButton(mode){return document.getElementById(mode==="mobile"?"resendMobile":"resendDesktop")}
+function startPhoneCooldown(mode,seconds=30){
+ clearInterval(PHONE_COOLDOWN_TIMER[mode]);
+ PHONE_COOLDOWN[mode]=seconds;
+ const btn=resendButton(mode);
+ if(btn){btn.classList.add("show");btn.disabled=true;btn.textContent=`Resend OTP in ${seconds}s`;}
+ PHONE_COOLDOWN_TIMER[mode]=setInterval(()=>{
+   PHONE_COOLDOWN[mode]--;
+   if(!btn)return;
+   if(PHONE_COOLDOWN[mode]<=0){clearInterval(PHONE_COOLDOWN_TIMER[mode]);PHONE_COOLDOWN_TIMER[mode]=null;btn.disabled=false;btn.textContent="Resend OTP";}
+   else btn.textContent=`Resend OTP in ${PHONE_COOLDOWN[mode]}s`;
+ },1000);
 }
 async function firebaseGoogleLogin(){
  clearAuthError();
@@ -523,22 +553,28 @@ async function firebaseGoogleLogin(){
   if(window.innerWidth<900){await firebaseAuth.signInWithRedirect(provider)}else{await firebaseAuth.signInWithPopup(provider)}
  }catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
 }
-async function firebaseSendOTP(mode){
+async function firebaseSendOTP(mode,isResend=false){
  clearAuthError();
  if(!FIREBASE_READY){showAuthError("Firebase could not initialize.");return}
+ if(PHONE_COOLDOWN[mode]>0){showAuthError(`Please wait ${PHONE_COOLDOWN[mode]} seconds before requesting another OTP.`);return}
  let raw=authPhoneInput(mode)?.value.trim().replace(/[^0-9+]/g,"");
  if(/^0/.test(raw))raw="+91"+raw.slice(1);
  if(/^91/.test(raw)&&!raw.startsWith("+"))raw="+"+raw;
  if(!/^\+91[6-9]\d{9}$/.test(raw)){showAuthError("Please enter a valid 10-digit Indian mobile number.");return}
- const btn=sendButton(mode);if(btn){btn.disabled=true;btn.textContent="Sending OTP…"}
+ const btn=sendButton(mode);
+ if(btn){btn.disabled=true;btn.textContent=isResend?"Sending again…":"Sending OTP…"}
  try{
-  const verifier=createRecaptcha(mode);
-  PHONE_CONFIRMATION[mode]=await firebaseAuth.signInWithPhoneNumber(raw,verifier);
-  otpBox(mode)?.classList.add("show");
-  if(btn){btn.textContent="OTP Sent ✓";btn.disabled=false}
-  toast("OTP sent to your mobile number");
+   const verifier=PHONE_RECAPTCHA[mode] || await createRecaptcha(mode);
+   PHONE_CONFIRMATION[mode]=await firebaseAuth.signInWithPhoneNumber(raw,verifier);
+   otpBox(mode)?.classList.add("show");
+   if(btn){btn.textContent="OTP Sent ✓";btn.disabled=true}
+   startPhoneCooldown(mode,30);
+   toast("OTP sent to your mobile number");
  }catch(err){
-  console.error(err);resetRecaptcha(mode);if(btn){btn.textContent="Send OTP →";btn.disabled=false}showAuthError(firebaseFriendlyError(err));
+   console.error(err);
+   resetRecaptcha(mode);
+   if(btn){btn.textContent="Send OTP →";btn.disabled=false}
+   showAuthError(firebaseFriendlyError(err));
  }
 }
 async function firebaseVerifyOTP(mode){
@@ -548,11 +584,15 @@ async function firebaseVerifyOTP(mode){
  try{await PHONE_CONFIRMATION[mode].confirm(code);PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode)}catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
 }
 function resetPhoneLogin(mode){
- PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode);otpBox(mode)?.classList.remove("show");const input=authPhoneInput(mode);if(input)input.focus();
+ PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode);clearInterval(PHONE_COOLDOWN_TIMER[mode]);PHONE_COOLDOWN_TIMER[mode]=null;PHONE_COOLDOWN[mode]=0;
+ const rb=resendButton(mode);if(rb){rb.classList.remove("show");rb.disabled=false;rb.textContent="Resend OTP";}
+ const sb=sendButton(mode);if(sb){sb.disabled=false;sb.textContent="Send OTP →";}
+ otpBox(mode)?.classList.remove("show");
+ const input=authPhoneInput(mode);if(input)input.focus();
 }
 function firebaseFriendlyError(err){
  const code=err?.code||"";
- const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one."};
+ const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one.","auth/captcha-check-failed":"reCAPTCHA verification failed. Please complete it again.","auth/missing-phone-number":"Please enter your mobile number.","auth/invalid-verification-id":"This verification session expired. Please request a new OTP.","auth/network-request-failed":"Network error. Check your internet connection and try again.","auth/session-cookie-expired":"Your session expired. Please sign in again."};
  return map[code]||err?.message||"Sign-in failed. Please try again.";
 }
 async function handleAuthUser(user){
@@ -574,8 +614,9 @@ async function signOutUser(){
  try{stopCloudSync();await firebaseAuth.signOut();}catch(err){console.error(err)}
  document.getElementById("app").style.display="none";document.getElementById("authGate")?.classList.add("show");document.getElementById("authLoading")?.classList.remove("hide");
 }
-function initFirebaseAuth(){
+async function initFirebaseAuth(){
  if(!FIREBASE_READY){document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");return}
+ try{await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn("Auth persistence unavailable",e)}
  firebaseAuth.getRedirectResult().catch(err=>{if(err)showAuthError(firebaseFriendlyError(err))});
  firebaseAuth.onAuthStateChanged(async user=>{
   if(user){await handleAuthUser(user)}else{
@@ -784,15 +825,15 @@ function bookingsPage(){
 function profilePage(){
  return `<div class="screen">${header("Profile")}
  <div class="content">
-  <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Synced</div></div></div></div>
+  <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Live Cloud Sync</div></div></div></div>
   <div class="card menu-card">
-   <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
+   <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone, email and address</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="signOutUser()"><div class="mi">↪</div><div><b>Sign Out</b><small>Sign out from this device</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="clearAllData()"><div class="mi">♻️</div><div><b>Reset App Data</b><small>Delete local records from this browser</small></div><b style="margin-left:auto">›</b></button>
   </div>
-  <div style="text-align:center;color:#999;font-size:10px;margin:18px">Sangam Dial Service • Local-first edition<br>Data is stored in this browser's Local Storage.</div>
+  <div style="text-align:center;color:#999;font-size:10px;margin:18px">Sangam Dial Service • Cloud-synced account<br>Your profile, bookings and support data sync through Firebase.</div>
  </div>${bottom("profile")}</div>`;
 }
 function supportPage(){
