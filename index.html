@@ -630,10 +630,23 @@ async function handleAuthUser(user){
  }
 }
 async function signOutUser(){
- try{stopCloudSync();await firebaseAuth.signOut();}catch(err){console.error(err)}
- document.getElementById("app").style.display="none";document.getElementById("authGate")?.classList.add("show");document.getElementById("authLoading")?.classList.remove("hide");
- IS_MANAGER = false;
- MANAGER_AUTH_UID = null;
+ try{
+  stopCloudSync();
+  await firebaseAuth.signOut();
+  // Reset UI state
+  document.getElementById("app").style.display = "none";
+  document.getElementById("authGate")?.classList.add("show");
+  document.getElementById("authLoading")?.classList.remove("hide");
+  IS_MANAGER = false;
+  MANAGER_AUTH_UID = null;
+  // Hide loading animation and show login
+  setTimeout(() => {
+   document.getElementById("authLoading")?.classList.add("hide");
+  }, 500);
+ }catch(err){
+  console.error(err);
+  toast("Sign out failed. Please try again.");
+ }
 }
 function initFirebaseAuth(){
  if(!FIREBASE_READY){document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");return}
@@ -644,7 +657,10 @@ function initFirebaseAuth(){
    if(isManager) IS_MANAGER = true;
    await handleAuthUser(user);
   }else{
-   stopCloudSync();document.getElementById("app").style.display="none";document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");
+   stopCloudSync();
+   document.getElementById("app").style.display = "none";
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("authGate")?.classList.add("show");
    IS_MANAGER = false;
    MANAGER_AUTH_UID = null;
   }
@@ -1371,7 +1387,7 @@ function popularSlides(){
  return `<div class="popular-slide">
    <div class="service-visual">${serviceArt(s)}<span class="visual-label">Professional doorstep service</span></div>
    <div class="service-body">
-    <div class="popular-kicker">POPULAR • ${String((popularIndex%ids.length)+1).padStart(2,"0")}</div>
+    <div class="popular-kicker">POPULAR • ${String((popularIndex%ids.length)+1).padStart(2,"00")}</div>
     <h2>${esc(s.name)} Service</h2>
     <p>${esc(s.desc)} Our team can visit your doorstep after booking.</p>
     <div class="price-row">
