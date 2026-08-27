@@ -16,7 +16,7 @@ html,body{margin:0;padding:0;background:#e9eaf0;font-family:Inter,ui-sans-serif,
 body{min-height:100vh}
 button,input,textarea,select{font:inherit}
 button{cursor:pointer;border:0}
-.app{width:min(100%,430px);min-height:100vh;margin:auto;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+.app{display:none;width:min(100%,430px);min-height:100vh;margin:auto;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
 .screen{min-height:100vh;padding-bottom:92px}
 .top-gradient{background:linear-gradient(135deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);color:#fff}
 .home-head{padding:20px 18px 22px;border-radius:0 0 30px 30px}
@@ -296,20 +296,293 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
   .compact-hello{margin-top:15px!important}
 }
 @keyframes drawerIn{from{transform:translateX(-100%);opacity:.7}to{transform:none;opacity:1}}
+
+/* ================= FIREBASE AUTH UI ================= */
+.auth-gate{position:fixed;inset:0;z-index:1000;background:#e9eaf0;display:none;overflow:auto}
+.auth-gate.show{display:flex;align-items:center;justify-content:center}
+.auth-shell{width:100%;min-height:100%;display:flex;background:var(--bg)}
+.auth-mobile{width:min(100%,430px);min-height:100vh;margin:auto;background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.auth-mobile-hero{height:39vh;min-height:300px;max-height:390px;background:linear-gradient(145deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);border-radius:0 0 38px 38px;color:#fff;padding:42px 25px 25px;position:relative;overflow:hidden}
+.auth-mobile-hero:before,.auth-mobile-hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.09)}
+.auth-mobile-hero:before{width:220px;height:220px;right:-75px;top:-90px}.auth-mobile-hero:after{width:180px;height:180px;left:-95px;bottom:-110px}
+.auth-brand-mark{width:65px;height:65px;border-radius:20px;background:rgba(255,255,255,.17);backdrop-filter:blur(12px);display:grid;place-items:center;font-size:32px;font-weight:1000;box-shadow:0 15px 35px rgba(20,10,70,.18);position:relative;z-index:1}
+.auth-mobile-hero h1{font-size:30px;line-height:1.05;margin:20px 0 6px;position:relative;z-index:1}.auth-mobile-hero p{font-size:12px;opacity:.9;line-height:1.5;max-width:290px;position:relative;z-index:1}
+.auth-mobile-card{margin:-28px 16px 22px;padding:22px 18px;border-radius:25px;background:#fff;box-shadow:0 20px 50px rgba(44,27,95,.14);position:relative;z-index:2}
+.auth-title{font-size:22px;font-weight:900;margin:0 0 5px}.auth-subtitle{font-size:11px;color:#7a7a86;line-height:1.45;margin:0 0 17px}
+.auth-google{width:100%;height:49px;border-radius:14px;background:#fff;border:1px solid #e4e4eb;color:#26262d;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 16px rgba(30,25,70,.06)}
+.google-g{font-weight:1000;font-size:19px;color:#4285f4}.auth-divider{display:flex;align-items:center;gap:10px;color:#aaa;font-size:9px;margin:16px 0}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#eee;flex:1}
+.auth-phone-row{display:flex;gap:7px}.auth-country{width:72px;display:flex;align-items:center;justify-content:center;background:#f8f8fc;border:1px solid #e4e4ec;border-radius:13px;font-size:12px;font-weight:800}.auth-phone-row input{flex:1}
+.auth-gate input,.auth-gate textarea{width:100%;border:1px solid #e3e3ed;background:#fafaff;border-radius:13px;padding:13px;outline:none}.auth-gate input:focus,.auth-gate textarea:focus{border-color:#8b55e8;box-shadow:0 0 0 3px rgba(113,48,220,.08)}
+.auth-action{width:100%;height:49px;border-radius:14px;margin-top:9px;font-weight:900}.auth-note{text-align:center;font-size:9px;color:#999;line-height:1.45;margin-top:12px}.auth-error{display:none;padding:9px 11px;border-radius:11px;background:#fff0f2;color:#bd3150;font-size:10px;margin-bottom:10px}.auth-error.show{display:block}
+.auth-otp{display:none}.auth-otp.show{display:block}.auth-change{background:none;color:#6d35df;font-size:10px;font-weight:800;margin-top:8px}
+.auth-profile-screen{display:none;position:fixed;inset:0;z-index:1100;background:rgba(20,17,35,.52);align-items:flex-end;justify-content:center}.auth-profile-screen.show{display:flex}.auth-profile-card{width:min(100%,620px);max-height:92vh;overflow:auto;background:#fff;border-radius:28px 28px 0 0;padding:24px}.auth-profile-card h2{margin:0;font-size:24px}.auth-profile-card p{font-size:11px;color:#777;line-height:1.5}
+.auth-desktop{display:none}
+@media(min-width:900px){
+ .auth-shell{min-height:100vh;padding:40px}.auth-mobile{display:none}.auth-desktop{display:grid;grid-template-columns:minmax(420px,.9fr) minmax(500px,1.1fr);width:min(1180px,100%);min-height:720px;max-height:calc(100vh - 80px);background:#fff;border-radius:34px;overflow:hidden;box-shadow:0 30px 90px rgba(35,25,85,.18)}
+ .auth-desktop-art{background:linear-gradient(145deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);color:#fff;padding:55px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}.auth-desktop-art:before{content:"";position:absolute;width:430px;height:430px;border-radius:50%;border:80px solid rgba(255,255,255,.07);right:-230px;top:-180px}.auth-desktop-art:after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;border:55px solid rgba(255,255,255,.06);left:-210px;bottom:-170px}
+ .auth-desktop-brand{display:flex;align-items:center;gap:13px;position:relative;z-index:1}.auth-desktop-brand .auth-brand-mark{width:60px;height:60px}.auth-desktop-brand b{font-size:19px;letter-spacing:2px}.auth-desktop-brand small{display:block;font-size:9px;letter-spacing:3px;opacity:.8;margin-top:3px}
+ .auth-desktop-copy{position:relative;z-index:1;max-width:420px}.auth-desktop-copy h1{font-size:46px;line-height:1.02;margin:0 0 17px;letter-spacing:-1.5px}.auth-desktop-copy p{font-size:13px;line-height:1.65;opacity:.9}.auth-benefits{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:28px}.auth-benefit{padding:13px;border-radius:15px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.12);font-size:10px}.auth-desktop-art footer{position:relative;z-index:1;font-size:10px;opacity:.75}
+ .auth-desktop-form{padding:60px 70px;display:flex;align-items:center}.auth-desktop-card{width:100%;max-width:480px;margin:auto}.auth-desktop-card .auth-title{font-size:31px}.auth-desktop-card .auth-subtitle{font-size:12px;margin-bottom:24px}.auth-desktop-card .auth-google{height:54px}.auth-desktop-card .auth-action{height:54px}.auth-desktop-card .auth-phone-row input{height:54px}.auth-desktop-card .auth-country{height:54px}
+}
+@media(max-width:899px){.auth-desktop{display:none}}
+.auth-loading{position:fixed;inset:0;z-index:1200;background:linear-gradient(145deg,#ee3181,#6d35df 60%,#258de8);display:flex;align-items:center;justify-content:center;color:#fff}.auth-loading.hide{display:none}.auth-loading-inner{text-align:center}.auth-loading-logo{font-size:70px}.auth-loading h2{margin:12px 0 4px;font-size:27px}.auth-loading p{font-size:11px;opacity:.85}.auth-spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}@keyframes spin{to{transform:rotate(360deg)}}
+
 </style>
 </head>
 <body>
+
+<div id="authLoading" class="auth-loading"><div class="auth-loading-inner"><div class="auth-loading-logo">⚙️</div><h2>SANGAM DIAL SERVICE</h2><p>Connecting your account securely…</p><div class="auth-spinner"></div></div></div>
+<div id="authGate" class="auth-gate">
+ <div class="auth-shell">
+  <div class="auth-mobile">
+   <div class="auth-mobile-hero"><div class="auth-brand-mark">S</div><h1>One account.<br>All your services.</h1><p>Sign in once and keep your profile, addresses and bookings synced across your devices.</p></div>
+   <div class="auth-mobile-card">
+    <h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Choose how you want to sign in.</p>
+    <div id="authErrorMobile" class="auth-error"></div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
+    <div class="auth-divider"><span>OR</span></div>
+    <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneMobile" inputmode="tel" autocomplete="tel" placeholder="Mobile number"></div>
+    <div id="recaptchaMobile"></div>
+    <button id="phoneSendMobile" class="auth-action purple" onclick="firebaseSendOTP('mobile')">Send OTP&nbsp; →</button>
+    <div id="otpMobile" class="auth-otp"><div style="height:9px"></div><input id="authOtpMobile" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('mobile')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('mobile')">Change number</button></div>
+    <div class="auth-note">By continuing, you agree to use Firebase Authentication for secure account sign-in.</div>
+   </div>
+  </div>
+  <div class="auth-desktop">
+   <section class="auth-desktop-art">
+    <div class="auth-desktop-brand"><div class="auth-brand-mark">S</div><div><b>SANGAM DIAL</b><small>SERVICE</small></div></div>
+    <div class="auth-desktop-copy"><div style="font-size:12px;font-weight:900;letter-spacing:2px;margin-bottom:14px;opacity:.8">WELCOME TO YOUR SERVICE HUB</div><h1>Everything about your service, in one place.</h1><p>Sign in to keep your customer profile, addresses, bookings and support requests safely synced with your account.</p><div class="auth-benefits"><div class="auth-benefit">☁️ Cloud Sync<br><span style="opacity:.7">Across your devices</span></div><div class="auth-benefit">📦 Bookings<br><span style="opacity:.7">Always available</span></div><div class="auth-benefit">📍 Addresses<br><span style="opacity:.7">Auto-filled at booking</span></div><div class="auth-benefit">🔐 Secure Login<br><span style="opacity:.7">Google or phone OTP</span></div></div></div>
+    <footer>SANGAM DIAL SERVICE • Secure customer account</footer>
+   </section>
+   <section class="auth-desktop-form"><div class="auth-desktop-card">
+    <div style="font-size:10px;color:#7a3de0;font-weight:900;letter-spacing:1.8px;margin-bottom:10px">CUSTOMER LOGIN</div><h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Sign in to access your synced profile and bookings.</p>
+    <div id="authErrorDesktop" class="auth-error"></div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
+    <div class="auth-divider"><span>OR CONTINUE WITH PHONE</span></div>
+    <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneDesktop" inputmode="tel" autocomplete="tel" placeholder="10 digit mobile number"></div>
+    <div id="recaptchaDesktop"></div>
+    <button id="phoneSendDesktop" class="auth-action purple" onclick="firebaseSendOTP('desktop')">Send OTP&nbsp; →</button>
+    <div id="otpDesktop" class="auth-otp"><div style="height:10px"></div><input id="authOtpDesktop" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('desktop')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('desktop')">Change number</button></div>
+    <div class="auth-note">Your account data is stored in Cloud Firestore and synced in real time after login.</div>
+   </div></section>
+  </div>
+ </div>
+</div>
+
 <div id="app" class="app"></div>
 <div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
 <div id="toast" class="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
 <script>
 /* =========================================================
    SANGAM DIAL SERVICE
    Storage layer is deliberately isolated so a real API/DB
    can replace it later without rebuilding the UI.
    ========================================================= */
-const STORAGE_KEY = "sangam_dial_service_v1";
+const STORAGE_BASE_KEY = "sangam_dial_service_v2";
+let STORAGE_KEY = STORAGE_BASE_KEY + "_guest";
+let AUTH_UID = null;
+let FIREBASE_READY = false;
+let CLOUD_LOADING = false;
+let CLOUD_LISTENER = null;
+let CLOUD_WRITE_TIMER = null;
+let PHONE_CONFIRMATION = {mobile:null,desktop:null};
+let PHONE_RECAPTCHA = {mobile:null,desktop:null};
+
+
+const firebaseConfig = {
+ apiKey: "AIzaSyC4lmSeMYkgvtrRzhd51txVuOTdjKh2quk",
+ authDomain: "sangamdialservice-893b6.firebaseapp.com",
+ projectId: "sangamdialservice-893b6",
+ storageBucket: "sangamdialservice-893b6.firebasestorage.app",
+ messagingSenderId: "453387434372",
+ appId: "1:453387434372:web:ffa9659284cc3ffc0385d1",
+ measurementId: "G-JW7X6324BC"
+};
+
+let firebaseApp=null, firebaseAuth=null, firestore=null, firebaseAnalytics=null;
+try{
+ firebaseApp=firebase.initializeApp(firebaseConfig);
+ firebaseAuth=firebase.auth();
+ firestore=firebase.firestore();
+ try{firebaseAnalytics=firebase.analytics(firebaseApp)}catch(_){/* Analytics may be unavailable on local files */}
+ FIREBASE_READY=true;
+}catch(err){
+ console.error("Firebase initialization failed",err);
+ FIREBASE_READY=false;
+}
+
+function cloudUserRef(){return firestore && AUTH_UID ? firestore.collection("users").doc(AUTH_UID) : null}
+function normalizeCloudData(data){
+ const base=structuredClone(defaultState);
+ const x=data||{};
+ return {
+  ...base,
+  version:2,
+  user:{...base.user,...(x.user||{})},
+  addresses:Array.isArray(x.addresses)?x.addresses:[],
+  bookings:Array.isArray(x.bookings)?x.bookings:[],
+  notifications:Array.isArray(x.notifications)?x.notifications:[],
+  support:Array.isArray(x.support)?x.support:[],
+  settings:{...base.settings,...(x.settings||{})},
+  meta:{...base.meta,...(x.meta||{})}
+ };
+}
+function serializableDB(){
+ return {version:2,user:DB.user,addresses:DB.addresses,bookings:DB.bookings,notifications:DB.notifications,support:DB.support,settings:DB.settings,meta:{...DB.meta,updatedAt:new Date().toISOString()}};
+}
+async function writeCloudNow(){
+ if(!FIREBASE_READY||!AUTH_UID||!firestore||CLOUD_LOADING)return;
+ try{
+  await cloudUserRef().set({
+   ...serializableDB(),
+   uid:AUTH_UID,
+   cloudUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
+ }catch(err){console.error("Cloud sync failed",err);toast("Cloud sync failed — your local copy is still safe")}
+}
+function scheduleCloudSync(){
+ if(!AUTH_UID||CLOUD_LOADING)return;
+ clearTimeout(CLOUD_WRITE_TIMER);
+ CLOUD_WRITE_TIMER=setTimeout(writeCloudNow,450);
+}
+function stopCloudSync(){
+ if(CLOUD_LISTENER){CLOUD_LISTENER();CLOUD_LISTENER=null}
+ clearTimeout(CLOUD_WRITE_TIMER);CLOUD_WRITE_TIMER=null;
+ AUTH_UID=null;
+}
+function switchUserStorage(uid){
+ AUTH_UID=uid;
+ STORAGE_KEY=STORAGE_BASE_KEY+"_"+uid;
+ DB=loadState();
+}
+async function mergeLocalIntoCloud(uid,cloudData){
+ const local=DB;
+ const hasLocal=local.bookings.length||local.support.length||local.notifications.length||local.user.name||local.addresses.length;
+ if(!hasLocal)return cloudData;
+ const merged=normalizeCloudData(cloudData);
+ if(!merged.user.name && local.user.name)merged.user={...merged.user,...local.user};
+ if(!merged.addresses.length&&local.addresses.length)merged.addresses=local.addresses;
+ const byId=(arr)=>new Map(arr.map(x=>[x.id,x]));
+ for(const key of ["bookings","support","notifications"]){
+  const map=byId(merged[key]);
+  for(const item of local[key])if(!map.has(item.id))merged[key].push(item);
+ }
+ DB=merged;saveState(false);
+ return merged;
+}
+async function hydrateCloudUser(user){
+ switchUserStorage(user.uid);
+ const ref=cloudUserRef();
+ let snap=await ref.get();
+ if(!snap.exists){
+   DB=normalizeCloudData({user:{name:user.displayName||"",email:user.email||"",phone:user.phoneNumber||"",avatar:initials(user.displayName||"U"),profileComplete:false}});
+   await ref.set({uid:user.uid,user:DB.user,addresses:[],bookings:[],notifications:[],support:[],settings:DB.settings,meta:DB.meta,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+ }else{
+   const cloud=normalizeCloudData(snap.data());
+   DB=await mergeLocalIntoCloud(user.uid,cloud);
+   DB.user={...DB.user,email:DB.user.email||user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
+   saveState(false);
+ }
+ // Real-time single-document sync keeps profile + bookings + support + notifications synchronized across devices.
+ CLOUD_LISTENER=ref.onSnapshot(s=>{
+   if(!s.exists||CLOUD_LOADING)return;
+   const incoming=normalizeCloudData(s.data());
+   DB=incoming;
+   saveState(false);
+   if(document.getElementById("app").style.display!=="none")render();
+ },err=>console.error("Firestore listener error",err));
+ await ref.set({lastLoginAt:firebase.firestore.FieldValue.serverTimestamp(),email:user.email||null,authPhone:user.phoneNumber||null},{merge:true});
+}
+function showAuthError(msg){["Mobile","Desktop"].forEach(x=>{const el=document.getElementById("authError"+x);if(el){el.textContent=msg;el.classList.add("show")}})}
+function clearAuthError(){["Mobile","Desktop"].forEach(x=>document.getElementById("authError"+x)?.classList.remove("show"))}
+function authPhoneInput(mode){return document.getElementById(mode==="mobile"?"authPhoneMobile":"authPhoneDesktop")}
+function authOtpInput(mode){return document.getElementById(mode==="mobile"?"authOtpMobile":"authOtpDesktop")}
+function recaptchaId(mode){return mode==="mobile"?"recaptchaMobile":"recaptchaDesktop"}
+function sendButton(mode){return document.getElementById(mode==="mobile"?"phoneSendMobile":"phoneSendDesktop")}
+function otpBox(mode){return document.getElementById(mode==="mobile"?"otpMobile":"otpDesktop")}
+function resetRecaptcha(mode){
+ try{if(PHONE_RECAPTCHA[mode])PHONE_RECAPTCHA[mode].clear()}catch(_){ }
+ PHONE_RECAPTCHA[mode]=null;
+ const box=document.getElementById(recaptchaId(mode));if(box)box.innerHTML="";
+}
+function createRecaptcha(mode){
+ resetRecaptcha(mode);
+ PHONE_RECAPTCHA[mode]=new firebase.auth.RecaptchaVerifier(recaptchaId(mode),{size:"invisible",callback:()=>{},"expired-callback":()=>{}});
+ return PHONE_RECAPTCHA[mode];
+}
+async function firebaseGoogleLogin(){
+ clearAuthError();
+ if(!FIREBASE_READY){showAuthError("Firebase could not initialize. Please open the site from a web server and check your Firebase setup.");return}
+ try{
+  const provider=new firebase.auth.GoogleAuthProvider();
+  if(window.innerWidth<900){await firebaseAuth.signInWithRedirect(provider)}else{await firebaseAuth.signInWithPopup(provider)}
+ }catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
+}
+async function firebaseSendOTP(mode){
+ clearAuthError();
+ if(!FIREBASE_READY){showAuthError("Firebase could not initialize.");return}
+ let raw=authPhoneInput(mode)?.value.trim().replace(/[^0-9+]/g,"");
+ if(/^0/.test(raw))raw="+91"+raw.slice(1);
+ if(/^91/.test(raw)&&!raw.startsWith("+"))raw="+"+raw;
+ if(!/^\+91[6-9]\d{9}$/.test(raw)){showAuthError("Please enter a valid 10-digit Indian mobile number.");return}
+ const btn=sendButton(mode);if(btn){btn.disabled=true;btn.textContent="Sending OTP…"}
+ try{
+  const verifier=createRecaptcha(mode);
+  PHONE_CONFIRMATION[mode]=await firebaseAuth.signInWithPhoneNumber(raw,verifier);
+  otpBox(mode)?.classList.add("show");
+  if(btn){btn.textContent="OTP Sent ✓";btn.disabled=false}
+  toast("OTP sent to your mobile number");
+ }catch(err){
+  console.error(err);resetRecaptcha(mode);if(btn){btn.textContent="Send OTP →";btn.disabled=false}showAuthError(firebaseFriendlyError(err));
+ }
+}
+async function firebaseVerifyOTP(mode){
+ clearAuthError();
+ const code=authOtpInput(mode)?.value.trim();
+ if(!/^\d{6}$/.test(code)){showAuthError("Enter the 6-digit OTP you received.");return}
+ try{await PHONE_CONFIRMATION[mode].confirm(code);PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode)}catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
+}
+function resetPhoneLogin(mode){
+ PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode);otpBox(mode)?.classList.remove("show");const input=authPhoneInput(mode);if(input)input.focus();
+}
+function firebaseFriendlyError(err){
+ const code=err?.code||"";
+ const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one."};
+ return map[code]||err?.message||"Sign-in failed. Please try again.";
+}
+async function handleAuthUser(user){
+ document.getElementById("authLoading")?.classList.remove("hide");
+ try{
+  CLOUD_LOADING=true;
+  await hydrateCloudUser(user);
+  CLOUD_LOADING=false;
+  document.getElementById("authGate")?.classList.remove("show");
+  document.getElementById("authLoading")?.classList.add("hide");
+  document.getElementById("app").style.display="block";
+  render();
+  setTimeout(()=>{if(needsOnboarding())showOnboarding();startPopularSlider()},150);
+ }catch(err){
+  CLOUD_LOADING=false;console.error(err);document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Could not load your cloud profile. Please try again.");
+ }
+}
+async function signOutUser(){
+ try{stopCloudSync();await firebaseAuth.signOut();}catch(err){console.error(err)}
+ document.getElementById("app").style.display="none";document.getElementById("authGate")?.classList.add("show");document.getElementById("authLoading")?.classList.remove("hide");
+}
+function initFirebaseAuth(){
+ if(!FIREBASE_READY){document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");return}
+ firebaseAuth.getRedirectResult().catch(err=>{if(err)showAuthError(firebaseFriendlyError(err))});
+ firebaseAuth.onAuthStateChanged(async user=>{
+  if(user){await handleAuthUser(user)}else{
+   stopCloudSync();document.getElementById("app").style.display="none";document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");
+  }
+ });
+}
 
 const SERVICES = [
  {id:"ac",name:"AC",icon:"❄️",price:299,desc:"AC repair, installation, servicing and gas refilling.",details:["AC Repair & Troubleshooting","AC Installation (New)","AC Gas Refilling","AC Cleaning & Servicing","AC Uninstallation"]},
@@ -348,9 +621,10 @@ function loadState(){
 }
 let DB=loadState();
 
-function saveState(){
+function saveState(sync=true){
  DB.meta.updatedAt=new Date().toISOString();
  localStorage.setItem(STORAGE_KEY,JSON.stringify(DB));
+ if(sync&&!CLOUD_LOADING) scheduleCloudSync();
 }
 const Store={
  get(){return DB},
@@ -510,11 +784,12 @@ function bookingsPage(){
 function profilePage(){
  return `<div class="screen">${header("Profile")}
  <div class="content">
-  <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s)</div></div></div></div>
+  <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Synced</div></div></div></div>
   <div class="card menu-card">
    <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
+   <button class="menu-row" onclick="signOutUser()"><div class="mi">↪</div><div><b>Sign Out</b><small>Sign out from this device</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="clearAllData()"><div class="mi">♻️</div><div><b>Reset App Data</b><small>Delete local records from this browser</small></div><b style="margin-left:auto">›</b></button>
   </div>
   <div style="text-align:center;color:#999;font-size:10px;margin:18px">Sangam Dial Service • Local-first edition<br>Data is stored in this browser's Local Storage.</div>
@@ -709,11 +984,11 @@ function saveAddress(){
 }
 function openDataManager(){
  document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>My Data</h3><button class="close" onclick="closeModal()">×</button></div>
- <div class="notice">Your profile, addresses, bookings, notifications and support requests are stored in <b>localStorage</b>. They remain available after closing/reopening the site, until browser/site data is cleared.</div>
+ <div class="notice">Your local cache keeps the app fast, while your signed-in profile, addresses, bookings, notifications and support requests are also synced to <b>Cloud Firestore</b> across devices.</div>
  <button class="full purple" onclick="downloadBackup()">⬇ Export Complete Backup</button>
  <div style="height:9px"></div>
  <label class="full" style="display:grid;place-items:center;background:#eee;color:#333">⬆ Import Backup<input type="file" accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])"></label>
- <div style="font-size:10px;color:#999;text-align:center;margin-top:14px">This storage layer is DB-ready: replace Store with API calls later without changing the booking UI.</div>`;
+ <div style="font-size:10px;color:#999;text-align:center;margin-top:14px">Cloud sync is active for this signed-in account. Export is still available as an extra backup.</div>`;
  document.getElementById("modal").classList.add("open");
 }
 function downloadBackup(){
@@ -723,7 +998,7 @@ function importBackup(file){
  if(!file)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);closeModal();render();toast("Backup imported successfully")}catch(e){toast("Invalid backup file")}};r.readAsText(file);
 }
 function clearAllData(){
- document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Reset Local Data?</h3><button class="close" onclick="closeModal()">×</button></div><p style="font-size:12px;color:#666">This will delete bookings, profile data, addresses, notifications and support requests from this browser.</p><button class="full pink" onclick="Store.reset();closeModal();render();toast('All local data reset')">Yes, Reset Everything</button>`;
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Reset Local Data?</h3><button class="close" onclick="closeModal()">×</button></div><p style="font-size:12px;color:#666">This will delete bookings, profile data, addresses, notifications and support requests from this browser.</p><button class="full pink" onclick="Store.reset();closeModal();render();scheduleCloudSync();toast('Local data reset; cloud sync updated')">Yes, Reset Everything</button>`;
  document.getElementById("modal").classList.add("open");
 }
 function callSupport(){
@@ -797,13 +1072,13 @@ function showOnboarding(){
    <div class="onboard-brand"><div class="onboard-logo">S</div><div><b>SANGAM</b><small>DIAL SERVICE</small></div></div>
    <div class="onboard-icon">👋</div>
    <h2>Welcome to Sangam</h2>
-   <p class="onboard-sub">Tell us a few details once. We'll save them securely in this browser and automatically fill them whenever you book a service.</p>
+   <p class="onboard-sub">Tell us a few details once. We'll save them to your secure account and automatically fill them whenever you book a service.</p>
    <div class="field"><label>Full Name <span>*</span></label><input id="loginName" value="${esc(u.name||"")}" placeholder="Enter your full name" autocomplete="name"></div>
    <div class="field"><label>Mobile Number <span>*</span></label><input id="loginPhone" value="${esc(u.phone||"")}" inputmode="tel" maxlength="15" placeholder="10 digit mobile number" autocomplete="tel"></div>
    <div class="field"><label>Address <span>*</span></label><textarea id="loginAddress" placeholder="House / Street / Area / City / PIN">${esc(u.address||DB.addresses[0]?.address||"")}</textarea></div>
    <div class="field"><label>Email <small>(Optional)</small></label><input id="loginEmail" value="${esc(u.email||"")}" type="email" placeholder="you@example.com" autocomplete="email"></div>
    <button class="full purple onboard-btn" onclick="completeOnboarding()">Continue to Sangam&nbsp; →</button>
-   <div class="onboard-note">🔒 Your profile and bookings are stored locally on this device.</div>
+   <div class="onboard-note">☁️ Your profile and bookings are securely synced with your account across devices.</div>
  </div>`;
  m.classList.add("open"); m.classList.remove("menu-modal");
  document.body.classList.add("onboarding-open");
@@ -822,6 +1097,7 @@ function completeOnboarding(){
  closeModal();
  document.body.classList.remove("onboarding-open");
  render();
+ scheduleCloudSync();
  setTimeout(startPopularSlider,80);
  toast("Profile saved successfully");
 }
@@ -830,17 +1106,11 @@ function needsOnboarding(){
 }
 
 function startApp(){
- render();
- setTimeout(()=>{
-   document.querySelector(".splash")?.classList.add("hide");
-   if(needsOnboarding()) showOnboarding();
-   startPopularSlider();
- },900);
+ document.getElementById("app").style.display="none";
+ document.getElementById("authGate")?.classList.remove("show");
+ initFirebaseAuth();
 }
-document.addEventListener("DOMContentLoaded",()=>{
- document.body.insertAdjacentHTML("afterbegin",`<div class="splash"><div class="splash-inner"><div class="gear">⚙️</div><h1>SANGAM</h1><h2>DIAL SERVICE</h2><p>One Call, All Solutions</p><button onclick="document.querySelector('.splash').classList.add('hide')">Get Started&nbsp; →</button></div></div>`);
- startApp();
-});
+document.addEventListener("DOMContentLoaded",()=>{ startApp(); });
 
 
 /* ===== ADVANCED MOTION HOOKS ===== */
