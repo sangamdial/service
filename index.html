@@ -80,6 +80,9 @@ button{cursor:pointer;border:0}
 @keyframes popularIn{from{opacity:0;transform:translateX(28px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes popularOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.985)}}
 .profile-address{font-size:9px;color:#888;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.services-heading{text-align:left;margin-top:20px}
+.booking-delete-note{margin-top:9px;padding:7px 9px;border-radius:10px;background:#fff7df;border:1px solid #ffe8ad;color:#8a6500;font-size:10px;font-weight:800;text-align:center}
+
 
  .hindi-tagline{margin:16px 0 4px;text-align:center;font-family:"Noto Serif Devanagari","Nirmala UI","Mangal",serif;font-size:22px;font-weight:800;letter-spacing:.2px;color:#6d35df;font-style:italic}
  .hindi-subtagline{text-align:center;color:#777;font-size:11px;font-weight:700;margin:0 0 16px}
@@ -478,14 +481,18 @@ async function hydrateCloudUser(user){
    const cloud=normalizeCloudData(snap.data());
    DB=await mergeLocalIntoCloud(user.uid,cloud);
    DB.user={...DB.user,email:DB.user.email||user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
-   saveState(false);
+   const removed=pruneExpiredBookings(DB);
+    saveState(false);
+    if(removed)scheduleCloudSync();
  }
  // Real-time single-document sync keeps profile + bookings + support + notifications synchronized across devices.
  CLOUD_LISTENER=ref.onSnapshot(s=>{
    if(!s.exists||CLOUD_LOADING)return;
    const incoming=normalizeCloudData(s.data());
-   DB=incoming;
-   saveState(false);
+    const removed=pruneExpiredBookings(incoming);
+    DB=incoming;
+    saveState(false);
+    if(removed)scheduleCloudSync();
    if(document.getElementById("app").style.display!=="none")render();
  },err=>console.error("Firestore listener error",err));
  await ref.set({lastLoginAt:firebase.firestore.FieldValue.serverTimestamp(),email:user.email||null,authPhone:user.phoneNumber||null},{merge:true});
@@ -561,12 +568,55 @@ const defaultState = {
  meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}
 };
 
+const BOOKING_RETENTION_MS=20*24*60*60*1000;
+let BOOKING_CLEANUP_TIMER=null;
+function bookingDeleteAt(b){
+ const created=new Date(b?.createdAt||0).getTime();
+ return Number.isFinite(created)&&created>0?created+BOOKING_RETENTION_MS:0;
+}
+function bookingCountdownText(b){
+ const expiresAt=bookingDeleteAt(b),diff=expiresAt-Date.now();
+ if(!expiresAt)return "Will be deleted in 20 days";
+ if(diff<=0)return "Will be deleted soon";
+ const days=Math.floor(diff/86400000),hours=Math.floor((diff%86400000)/3600000),mins=Math.floor((diff%3600000)/60000);
+ if(days>0)return `Will be deleted in ${days} day${days===1?"":"s"}`;
+ if(hours>0)return `Will be deleted in ${hours} hour${hours===1?"":"s"} ${mins} min`;
+ return `Will be deleted in ${Math.max(1,mins)} min`;
+}
+function pruneExpiredBookings(state){
+ if(!state||!Array.isArray(state.bookings))return false;
+ const now=Date.now(),before=state.bookings.length;
+ state.bookings=state.bookings.filter(b=>{
+  const expiresAt=bookingDeleteAt(b);
+  return !expiresAt||expiresAt>now;
+ });
+ return state.bookings.length!==before;
+}
+function cleanupExpiredBookings(sync=true){
+ const removed=pruneExpiredBookings(DB);
+ if(removed)saveState(sync);
+ return removed;
+}
+function startBookingCleanupTimer(){
+ clearInterval(BOOKING_CLEANUP_TIMER);
+ BOOKING_CLEANUP_TIMER=setInterval(()=>{
+  const removed=cleanupExpiredBookings(true);
+  document.querySelectorAll("[data-booking-delete-at]").forEach(el=>{
+   const created=Number(el.dataset.bookingCreatedAt);
+   if(created)el.textContent=bookingCountdownText({createdAt:new Date(created).toISOString()});
+  });
+  if(removed&&route.page==="bookings")render();
+ },60000);
+}
+
 function loadState(){
  try{
-   const raw=localStorage.getItem(STORAGE_KEY);
-   if(!raw){localStorage.setItem(STORAGE_KEY,JSON.stringify(defaultState));return structuredClone(defaultState)}
-   const parsed=JSON.parse(raw);
-   return Object.assign(structuredClone(defaultState),parsed,{user:Object.assign({},defaultState.user,parsed.user||{})});
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(!raw){localStorage.setItem(STORAGE_KEY,JSON.stringify(defaultState));return structuredClone(defaultState)}
+  const parsed=JSON.parse(raw);
+  const state=Object.assign(structuredClone(defaultState),parsed,{user:Object.assign({},defaultState.user,parsed.user||{})});
+  if(pruneExpiredBookings(state))localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  return state;
  }catch(e){return structuredClone(defaultState)}
 }
 let DB=loadState();
@@ -650,6 +700,11 @@ function home(){
    <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
   </div>
   <div class="content">
+   <div class="section-title popular-heading"><span>Popular Service</span><div class="carousel-dots" id="popularDots"></div></div>
+   <div class="card service-card popular-carousel" id="popularCarousel">
+    ${popularSlides()}
+   </div>
+   <div class="section-title services-heading">Services</div>
    <div class="card categories" id="categories">${cats}</div>
    <div class="section-title">Quality Service</div>
    <div class="card banner" onclick="go('service','ac')"><div><h3>You Can Trust</h3><p>Certified Technicians • Quick Support</p></div><div class="arrow">›</div></div>
@@ -657,10 +712,6 @@ function home(){
    <div class="card" style="padding:13px;display:grid;grid-template-columns:1fr 1fr;gap:9px;background:linear-gradient(135deg,#fff,#f7f2ff)">
     <div style="padding:12px;border-radius:16px;background:#f1fff8;border:1px solid #dcf7e9"><div style="font-size:20px">🟢</div><b style="font-size:12px">Live Availability</b><div style="font-size:9px;color:#777;margin-top:3px">Experts available near you</div></div>
     <div style="padding:12px;border-radius:16px;background:#f2f7ff;border:1px solid #dceaff"><div style="font-size:20px">⚡</div><b style="font-size:12px">Quick Response</b><div style="font-size:9px;color:#777;margin-top:3px">Fast booking confirmation</div></div>
-   </div>
-   <div class="section-title popular-heading"><span>Popular Service</span><div class="carousel-dots" id="popularDots"></div></div>
-   <div class="card service-card popular-carousel" id="popularCarousel">
-    ${popularSlides()}
    </div>
    ${recent.length?`<div class="section-title">Recent Bookings</div>${recent.map(bookingMini).join("")}`:""}
    <div class="section-title">Live Service Network</div>
@@ -695,7 +746,7 @@ function aboutPage(){
 }
 function bookingMini(b){
  const s=service(b.serviceId);
- return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status">${esc(b.status)}</span></div></div></div>`;
+ return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
 }
 function servicePage(id){
  const s=service(id);
@@ -751,7 +802,7 @@ function bookingsPage(){
  const bs=DB.bookings.slice().reverse();
  return `<div class="screen">${header("My Bookings")}
   <div class="tabs"><button class="tab active">All</button><button class="tab">Upcoming</button><button class="tab">Completed</button></div>
-  <div class="booking">${bs.length?bs.map(b=>`<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString("en-IN")}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join(""):`<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
+  <div class="booking">${bs.length?bs.map(b=>`<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString("en-IN")}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join(""):`<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
   ${bottom("bookings")}</div>`;
 }
 function profilePage(){
@@ -816,7 +867,8 @@ function confirmBooking(serviceId){
  const customerCode=String(name).trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi,"").toUpperCase()||"USER";
  const userServiceOrders=DB.bookings.filter(x=>x.serviceId===serviceId && String(x.name||"").trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi,"").toUpperCase()===customerCode);
  const serial=userServiceOrders.length+1;
- const booking={id:`SDS_${serviceCode}_${serial}`,serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt:new Date().toISOString()};
+ const createdAt=new Date().toISOString();
+  const booking={id:`SDS_${serviceCode}_${serial}`,serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt,expiresAt:new Date(new Date(createdAt).getTime()+BOOKING_RETENTION_MS).toISOString()};
  DB.user.name=name;DB.user.phone=phone;DB.user.profileComplete=true;DB.bookings.push(booking);
  DB.notifications.push({id:uid("N"),title:"Booking Confirmed",text:`${s.name} service booked for ${booking.date} at ${booking.time}.`,createdAt:new Date().toISOString(),read:false});
  saveState();
@@ -1100,6 +1152,8 @@ function needsOnboarding(){
 function startApp(){
  document.getElementById("app").style.display="none";
  document.getElementById("authGate")?.classList.remove("show");
+ cleanupExpiredBookings(true);
+ startBookingCleanupTimer();
  initFirebaseAuth();
 }
 document.addEventListener("DOMContentLoaded",()=>{ startApp(); });
