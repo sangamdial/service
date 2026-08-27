@@ -320,7 +320,8 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .auth-title{font-size:22px;font-weight:900;margin:0 0 5px}.auth-subtitle{font-size:11px;color:#7a7a86;line-height:1.45;margin:0 0 17px}
 .auth-google{width:100%;height:49px;border-radius:14px;background:#fff;border:1px solid #e4e4eb;color:#26262d;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 16px rgba(30,25,70,.06)}
 .google-g{font-weight:1000;font-size:19px;color:#4285f4}.auth-divider{display:flex;align-items:center;gap:10px;color:#aaa;font-size:9px;margin:16px 0}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#eee;flex:1}
-.auth-phone-row{display:flex;gap:7px}.auth-country{width:72px;display:flex;align-items:center;justify-content:center;background:#f8f8fc;border:1px solid #e4e4ec;border-radius:13px;font-size:12px;font-weight:800}.auth-phone-row input{flex:1}
+.auth-phone-row{display:flex;gap:7px;flex-direction:column;width:100%}
+.auth-phone-row input{width:100%}
 .auth-gate input,.auth-gate textarea{width:100%;border:1px solid #e3e3ed;background:#fafaff;border-radius:13px;padding:13px;outline:none}.auth-gate input:focus,.auth-gate textarea:focus{border-color:#8b55e8;box-shadow:0 0 0 3px rgba(113,48,220,.08)}
 .auth-action{width:100%;height:49px;border-radius:14px;margin-top:9px;font-weight:900}.auth-note{text-align:center;font-size:9px;color:#999;line-height:1.45;margin-top:12px}.auth-error{display:none;padding:9px 11px;border-radius:11px;background:#fff0f2;color:#bd3150;font-size:10px;margin-bottom:10px}.auth-error.show{display:block}
 .auth-otp{display:none}.auth-otp.show{display:block}.auth-change{background:none;color:#6d35df;font-size:10px;font-weight:800;margin-top:8px}
@@ -358,6 +359,21 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 @keyframes servicePulse{0%,48%{opacity:0;transform:translateY(9px) scale(.96)}60%{opacity:1;transform:translateY(0) scale(1)}72%,100%{opacity:1;transform:translateY(-1px) scale(1)}}
 @keyframes readingFade{0%,62%{opacity:0}72%,100%{opacity:1}}@keyframes dotPulse{0%,100%{transform:translateY(0);opacity:.25}50%{transform:translateY(-5px);opacity:1}}
 
+/* Manager Panel Styles */
+.manager-tabs{display:flex;gap:7px;padding:13px 14px;overflow:auto;background:#fff;border-bottom:1px solid #eee}
+.manager-tab{padding:9px 18px;border-radius:20px;background:#f5f5f9;border:1px solid #e8e8ef;white-space:nowrap;font-size:12px;font-weight:700;color:#666;cursor:pointer;transition:.2s}
+.manager-tab.active{background:#7232dc;color:#fff;border-color:#7232dc}
+.manager-tab .count{background:rgba(0,0,0,.08);border-radius:99px;padding:0 8px;font-size:10px;margin-left:5px}
+.manager-tab.active .count{background:rgba(255,255,255,.2)}
+.manager-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px}
+.manager-stat-card{padding:14px;border-radius:16px;text-align:center;background:#fff;border:1px solid #eee}
+.manager-stat-card .num{font-size:28px;font-weight:900}
+.manager-stat-card .label{font-size:10px;color:#888;margin-top:2px}
+.manager-stat-card.pending .num{color:#b8860b}
+.manager-stat-card.confirmed .num{color:#0b9b59}
+.manager-stat-card.rejected .num{color:#d43b3b}
+.rejection-reason{background:#fff5f5;border:1px solid #ffdada;padding:8px 12px;border-radius:10px;font-size:11px;color:#b33;margin-top:6px}
+.rejection-reason strong{color:#8a2a2a}
 </style>
 </head>
 <body>
@@ -389,6 +405,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
   <div class="splash-dots"><i></i><i></i><i></i></div>
  </div>
 </div>
+
 <div id="authGate" class="auth-gate">
  <div class="auth-shell">
   <div class="auth-mobile">
@@ -396,7 +413,15 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
    <div class="auth-mobile-card">
     <h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Choose how you want to sign in.</p>
     <div id="authErrorMobile" class="auth-error"></div>
-    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button><div class="auth-note">Sign in securely with your Google account.</div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
+    <div class="auth-divider">OR</div>
+    <div class="auth-phone-row">
+     <input id="managerEmailLogin" placeholder="Manager Email" type="email" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
+    </div>
+    <div class="auth-phone-row" style="margin-top:8px">
+     <input id="managerPasswordLogin" placeholder="Password" type="password" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
+    </div>
+    <button class="auth-action purple" onclick="managerEmailLogin()" style="margin-top:8px">🔑 Manager Login</button>
    </div>
   </div>
   <div class="auth-desktop">
@@ -408,7 +433,15 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
    <section class="auth-desktop-form"><div class="auth-desktop-card">
     <div style="font-size:10px;color:#7a3de0;font-weight:900;letter-spacing:1.8px;margin-bottom:10px">CUSTOMER LOGIN</div><h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Sign in to access your synced profile and bookings.</p>
     <div id="authErrorDesktop" class="auth-error"></div>
-    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button><div class="auth-note">Your account data is stored in Cloud Firestore and synced in real time after login.</div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
+    <div class="auth-divider">OR</div>
+    <div style="display:flex;gap:8px;flex-direction:column;width:100%">
+     <input id="managerEmailLoginDesktop" placeholder="Manager Email" type="email" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
+    </div>
+    <div style="display:flex;gap:8px;flex-direction:column;width:100%;margin-top:8px">
+     <input id="managerPasswordLoginDesktop" placeholder="Password" type="password" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
+    </div>
+    <button class="auth-action purple" onclick="managerEmailLogin()" style="margin-top:8px">🔑 Manager Login</button>
    </div></section>
   </div>
  </div>
@@ -424,9 +457,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
 <script>
 /* =========================================================
-   SANGAM DIAL SERVICE
-   Storage layer is deliberately isolated so a real API/DB
-   can replace it later without rebuilding the UI.
+   SANGAM DIAL SERVICE — Complete Manager Panel
    ========================================================= */
 setTimeout(()=>document.getElementById("authLoading")?.classList.add("hide"),7000);
  const STORAGE_BASE_KEY = "sangam_dial_service_v2";
@@ -436,7 +467,8 @@ let FIREBASE_READY = false;
 let CLOUD_LOADING = false;
 let CLOUD_LISTENER = null;
 let CLOUD_WRITE_TIMER = null;
-
+let MANAGER_AUTH_UID = null;
+let IS_MANAGER = false;
 
 const firebaseConfig = {
  apiKey: "AIzaSyC4lmSeMYkgvtrRzhd51txVuOTdjKh2quk",
@@ -453,7 +485,7 @@ try{
  firebaseApp=firebase.initializeApp(firebaseConfig);
  firebaseAuth=firebase.auth();
  firestore=firebase.firestore();
- try{firebaseAnalytics=firebase.analytics(firebaseApp)}catch(_){/* Analytics may be unavailable on local files */}
+ try{firebaseAnalytics=firebase.analytics(firebaseApp)}catch(_){}
  FIREBASE_READY=true;
 }catch(err){
  console.error("Firebase initialization failed",err);
@@ -534,7 +566,6 @@ async function hydrateCloudUser(user){
     saveState(false);
     if(removed)scheduleCloudSync();
  }
- // Real-time single-document sync keeps profile + bookings + support + notifications synchronized across devices.
  CLOUD_LISTENER=ref.onSnapshot(s=>{
    if(!s.exists||CLOUD_LOADING)return;
    const incoming=normalizeCloudData(s.data());
@@ -558,9 +589,31 @@ async function firebaseGoogleLogin(){
 }
 function firebaseFriendlyError(err){
  const code=err?.code||"";
- const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one."};
+ const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication."};
  return map[code]||err?.message||"Sign-in failed. Please try again.";
 }
+
+async function managerEmailLogin(){
+ clearAuthError();
+ const mobileEmail = document.getElementById("managerEmailLogin")?.value?.trim();
+ const mobilePass = document.getElementById("managerPasswordLogin")?.value?.trim();
+ const desktopEmail = document.getElementById("managerEmailLoginDesktop")?.value?.trim();
+ const desktopPass = document.getElementById("managerPasswordLoginDesktop")?.value?.trim();
+ const email = mobileEmail || desktopEmail;
+ const password = mobilePass || desktopPass;
+ if(!email || !password){showAuthError("Please enter email and password");return}
+ if(email.toLowerCase() !== "sangamdialservice@gmail.com"){showAuthError("Only manager email is allowed");return}
+ try{
+  const cred = await firebaseAuth.signInWithEmailAndPassword(email, password);
+  IS_MANAGER = true;
+  MANAGER_AUTH_UID = cred.user.uid;
+  await handleAuthUser(cred.user);
+ }catch(err){
+  console.error(err);
+  showAuthError(firebaseFriendlyError(err) || "Invalid manager credentials. Please check email and password.");
+ }
+}
+
 async function handleAuthUser(user){
  document.getElementById("authLoading")?.classList.remove("hide");
  try{
@@ -579,13 +632,21 @@ async function handleAuthUser(user){
 async function signOutUser(){
  try{stopCloudSync();await firebaseAuth.signOut();}catch(err){console.error(err)}
  document.getElementById("app").style.display="none";document.getElementById("authGate")?.classList.add("show");document.getElementById("authLoading")?.classList.remove("hide");
+ IS_MANAGER = false;
+ MANAGER_AUTH_UID = null;
 }
 function initFirebaseAuth(){
  if(!FIREBASE_READY){document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");return}
  firebaseAuth.getRedirectResult().catch(err=>{if(err)showAuthError(firebaseFriendlyError(err))});
  firebaseAuth.onAuthStateChanged(async user=>{
-  if(user){await handleAuthUser(user)}else{
+  if(user){
+   const isManager = user.email?.toLowerCase() === "sangamdialservice@gmail.com";
+   if(isManager) IS_MANAGER = true;
+   await handleAuthUser(user);
+  }else{
    stopCloudSync();document.getElementById("app").style.display="none";document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");
+   IS_MANAGER = false;
+   MANAGER_AUTH_UID = null;
   }
  });
 }
@@ -655,7 +716,7 @@ function startBookingCleanupTimer(){
    if(created)el.textContent=bookingCountdownText({createdAt:new Date(created).toISOString()});
   });
   if(removed&&route.page==="bookings")render();
-  if(route.page==="manager")renderManagerBookings(MANAGER_BOOKINGS_CACHE);
+  if(route.page==="manager")loadManagerPanel();
  },60000);
 }
 
@@ -683,12 +744,10 @@ const Store={
  export(){return JSON.stringify(DB,null,2)},
  import(json){const x=JSON.parse(json);if(!x || typeof x!=="object")throw Error("Invalid data");DB=x;saveState()}
 };
-/* Future backend adapter:
-async function syncWithDatabase(){ return fetch('/api/...',{method:'POST',body:JSON.stringify(DB)}) }
-All user/order records currently live in localStorage.
-*/
 
 let route={page:"home",service:null};
+let managerTab = "all";
+let MANAGER_BOOKINGS_CACHE = [];
 
 function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function money(n){return "₹"+Number(n||0).toLocaleString("en-IN")}
@@ -737,7 +796,6 @@ function serviceArt(s, mini=false){
    <img class="service-photo" src="${url}" alt="Professional ${esc(s.name)} service" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.parentElement.classList.add('photo-fallback');">
    <div class="photo-fallback-layer"><span>${s.icon||'⚙️'}</span></div>
    <div class="photo-vignette"></div><div class="photo-shine"></div>
-   
  </div>`;
 }
 function home(){
@@ -792,7 +850,6 @@ function aboutPage(){
    </div>
    <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;border:1px solid #eee;box-shadow:0 8px 24px rgba(0,0,0,.06)">
     <img src="poster.jpeg" alt="Sangam Dial Service Poster" loading="lazy" style="display:block;width:100%;height:auto;max-height:520px;object-fit:contain;background:#fff">
-    <div style="display:none;min-height:180px;align-items:center;justify-content:center;text-align:center;padding:25px;background:linear-gradient(135deg,#f7f1ff,#fff)"><div><div style="font-size:38px;margin-bottom:8px">🖼️</div><b>Service Poster</b><div style="font-size:10px;color:#888;margin-top:5px">Upload <b>poster.html</b> to the GitHub repository.</div></div></div>
    </div>
   </div>
   ${bottom("profile")}</div>`;
@@ -855,7 +912,7 @@ function bookingsPage(){
  const bs=DB.bookings.slice().reverse();
  return `<div class="screen">${header("My Bookings")}
   <div class="tabs"><button class="tab active">All</button><button class="tab">Upcoming</button><button class="tab">Completed</button></div>
-  <div class="booking">${bs.length?bs.map(b=>`<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString("en-IN")}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join(""):`<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
+  <div class="booking">${bs.length?bs.map(b=>`<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span>${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}<div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString("en-IN")}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join(""):`<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
   ${bottom("bookings")}</div>`;
 }
 function profilePage(){
@@ -863,7 +920,7 @@ function profilePage(){
  <div class="content">
   <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Synced</div></div></div></div>
   <div class="card menu-card">
-   ${isManager()?`<button class="menu-row" onclick="openManager()"><div class="mi">📊</div><div><b>Manager Panel 📊</b><small>Manage all customer bookings</small></div><b style="margin-left:auto">›</b></button>`:""}
+   ${IS_MANAGER ? `<button class="menu-row" onclick="go('manager')"><div class="mi">📊</div><div><b>Manager Panel 📊</b><small>Manage all customer bookings</small></div><b style="margin-left:auto">›</b></button>` : ''}
    <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
@@ -886,37 +943,50 @@ function supportPage(){
  </div>${bottom("support")}</div>`;
 }
 
-
-function isManager(){
- const authEmail=(window.firebaseAuth?.currentUser?.email||"").trim().toLowerCase();
- const dbEmail=(DB?.user?.email||"").trim().toLowerCase();
- return MANAGER_EMAILS.some(x=>x.trim().toLowerCase()===authEmail || x.trim().toLowerCase()===dbEmail);
-}
 function managerPage(){
  return `<div class="screen">${header("Manager Panel")}
   <div class="content">
    <div class="card" style="padding:18px;background:linear-gradient(135deg,#1d123d,#7132d8);color:#fff;margin-bottom:12px">
     <div style="font-size:10px;opacity:.72;text-transform:uppercase;letter-spacing:1px;font-weight:900">Management Dashboard</div>
     <h2 style="margin:5px 0 4px">All Customer Bookings</h2>
-    <p style="margin:0;font-size:11px;opacity:.82">View bookings from all signed-in customers in one place.</p><div style="margin-top:8px;font-size:9px;opacity:.68">Manager: sangamdialservice@gmail.com</div>
+    <p style="margin:0;font-size:11px;opacity:.82">View and manage bookings from all signed-in customers.</p>
+    <div style="margin-top:8px;font-size:9px;opacity:.68">Manager: sangamdialservice@gmail.com</div>
    </div>
-   <div id="managerStats" class="card" style="padding:12px;margin-bottom:12px">Loading booking statistics…</div>
+   <div class="manager-tabs" id="managerTabs">
+    <button class="manager-tab active" data-tab="all" onclick="switchManagerTab('all')">📋 All <span class="count" id="countAll">0</span></button>
+    <button class="manager-tab" data-tab="pending" onclick="switchManagerTab('pending')">⏳ Pending <span class="count" id="countPending">0</span></button>
+    <button class="manager-tab" data-tab="confirmed" onclick="switchManagerTab('confirmed')">✅ Confirmed <span class="count" id="countConfirmed">0</span></button>
+    <button class="manager-tab" data-tab="rejected" onclick="switchManagerTab('rejected')">❌ Rejected <span class="count" id="countRejected">0</span></button>
+   </div>
+   <div class="manager-stats-grid" id="managerStats">
+    <div class="manager-stat-card pending"><div class="num" id="statPending">0</div><div class="label">Pending</div></div>
+    <div class="manager-stat-card confirmed"><div class="num" id="statConfirmed">0</div><div class="label">Confirmed</div></div>
+    <div class="manager-stat-card rejected"><div class="num" id="statRejected">0</div><div class="label">Rejected</div></div>
+   </div>
    <div class="card" style="padding:12px;margin-bottom:12px">
-    <input id="managerSearch" class="field-input" placeholder="Search name, phone, order ID or service…" oninput="filterManagerBookings(this.value)">
+    <input id="managerSearch" class="field-input" placeholder="Search name, phone, order ID or service…" oninput="filterManagerBookings(this.value)" style="width:100%;border:1px solid #e5e5ed;border-radius:13px;padding:12px;outline:none">
    </div>
    <div id="managerBookings"><div class="empty"><div class="big">☁️</div><h3>Loading bookings…</h3><p>Please wait while manager data is loaded.</p></div></div>
   </div>
   ${bottom("profile")}</div>`;
 }
-let MANAGER_BOOKINGS_CACHE=[];
+
+function switchManagerTab(tab){
+ managerTab = tab;
+ document.querySelectorAll('.manager-tab').forEach(el => {
+  el.classList.toggle('active', el.dataset.tab === tab);
+ });
+ renderManagerBookings(MANAGER_BOOKINGS_CACHE);
+}
+
 async function loadManagerPanel(){
- if(!isManager()){
+ if(!IS_MANAGER){
   toast("Manager access is restricted");
   go("profile");
   return;
  }
- const box=document.getElementById("managerBookings"),stats=document.getElementById("managerStats");
- if(!box||!stats)return;
+ const box=document.getElementById("managerBookings");
+ if(!box)return;
  try{
   const snap=await firestore.collection("users").get();
   const rows=[];
@@ -934,15 +1004,14 @@ async function loadManagerPanel(){
   renderManagerBookings(rows);
  }catch(err){
   console.error("Manager panel error",err);
-  stats.innerHTML='<div style="font-size:12px;font-weight:800">Manager data could not be loaded.</div><div style="font-size:10px;color:#777;margin-top:4px">Check Firebase Firestore rules: the manager account must have read access to the <b>users</b> collection.</div>';
   box.innerHTML='<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading all customer records.</p></div>';
  }
 }
 
-async function updateBookingStatusManager(uidValue, bookingId, newStatus){
- if(!isManager()){toast("Manager access is restricted");return}
+async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason){
+ if(!IS_MANAGER){toast("Manager access is restricted");return}
  if(!firestore){toast("Firestore is not available");return}
- const note=newStatus==="Confirmed" ? "Booking confirmed by manager." : "Booking rejected by manager.";
+ const note = newStatus === "Confirmed" ? "Booking confirmed by manager." : `Booking rejected: ${reason || 'No reason provided'}`;
  try{
   const ref=firestore.collection("users").doc(uidValue);
   await firestore.runTransaction(async tx=>{
@@ -951,7 +1020,7 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus){
    const data=snap.data()||{};
    const bookings=Array.isArray(data.bookings)?data.bookings.map(b=>{
     if(b.id!==bookingId)return b;
-    return {...b,status:newStatus,managerNote:note,managerUpdatedAt:new Date().toISOString(),managerUpdatedBy:"sangamdialservice@gmail.com"};
+    return {...b,status:newStatus,managerNote:note,rejectionReason: newStatus === "Rejected" ? (reason || "No reason provided") : undefined,managerUpdatedAt:new Date().toISOString(),managerUpdatedBy:"sangamdialservice@gmail.com"};
    }):[];
    const target=bookings.find(b=>b.id===bookingId);
    if(!target)throw new Error("Booking not found");
@@ -962,7 +1031,7 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus){
     title:newStatus==="Confirmed"?"Booking Confirmed":"Booking Rejected",
     text:newStatus==="Confirmed"
       ?`${s.name} booking ${target.id} has been confirmed by the manager.`
-      :`${s.name} booking ${target.id} was rejected by the manager.`,
+      :`${s.name} booking ${target.id} was rejected. Reason: ${reason || 'Not specified'}`,
     createdAt:new Date().toISOString(),
     read:false,
     bookingId:target.id
@@ -982,31 +1051,49 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus){
  }
 }
 
+function showRejectReasonModal(uidValue, bookingId){
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Reject Booking</h3><button class="close" onclick="closeModal()">×</button></div>
+  <p style="font-size:12px;color:#666;margin-bottom:12px">Please provide a reason for rejecting this booking. The customer will see this reason in their booking details.</p>
+  <div class="field"><label>Rejection Reason</label><textarea id="rejectReasonInput" placeholder="e.g. Technician not available on selected date, Service not available in this area, etc." rows="3"></textarea></div>
+  <button class="full pink" onclick="confirmRejectBooking('${uidValue}','${bookingId}')">Confirm Rejection</button>
+  <button class="full" style="background:#eee;color:#333;margin-top:8px" onclick="closeModal()">Cancel</button>`;
+ document.getElementById("modal").classList.add("open");
+}
+
+function confirmRejectBooking(uidValue, bookingId){
+ const reason = document.getElementById("rejectReasonInput")?.value?.trim();
+ if(!reason){toast("Please provide a rejection reason");return}
+ closeModal();
+ updateBookingStatusManager(uidValue, bookingId, "Rejected", reason);
+}
+
 function managerActionButtons(b){
  if(b.status==="Confirmed")return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#effaf3;color:#187844;font-size:11px;font-weight:800">✓ Confirmed by Manager</div>`;
- if(b.status==="Rejected")return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#fff0f2;color:#b4233c;font-size:11px;font-weight:800">✕ Rejected by Manager</div>`;
+ if(b.status==="Rejected")return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#fff0f2;color:#b4233c;font-size:11px;font-weight:800">✕ Rejected by Manager${b.rejectionReason ? `<br><span style="font-weight:400">Reason: ${esc(b.rejectionReason)}</span>` : ''}</div>`;
  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-  <button class="full" style="background:#17844b;color:#fff" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Confirmed')">✓ Confirm Booking</button>
-  <button class="full pink" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Rejected')">✕ Reject Booking</button>
+  <button class="full" style="background:#17844b;color:#fff" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Confirmed','')">✓ Confirm</button>
+  <button class="full pink" onclick="event.stopPropagation();showRejectReasonModal('${b._uid}','${b.id}')">✕ Reject</button>
  </div>`;
 }
 
 function renderManagerBookings(rows){
  const stats=document.getElementById("managerStats"),box=document.getElementById("managerBookings");
  if(!stats||!box)return;
- const uniqueUsers=new Set(rows.map(x=>x._uid)).size;
+ const filtered = managerTab === "all" ? rows : rows.filter(b => (b.status || "Pending").toLowerCase() === managerTab);
  const pending=rows.filter(x=>x.status==="Pending").length;
  const confirmed=rows.filter(x=>x.status==="Confirmed").length;
  const rejected=rows.filter(x=>x.status==="Rejected").length;
- stats.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
-  <div style="padding:10px;border-radius:14px;background:#f5efff"><b style="font-size:19px;color:#7132d8">${rows.length}</b><div style="font-size:8px;color:#777">Total</div></div>
-  <div style="padding:10px;border-radius:14px;background:#fff8e8"><b style="font-size:19px;color:#a36a00">${pending}</b><div style="font-size:8px;color:#777">Pending</div></div>
-  <div style="padding:10px;border-radius:14px;background:#effaf3"><b style="font-size:19px;color:#16834b">${confirmed}</b><div style="font-size:8px;color:#777">Confirmed</div></div>
-  <div style="padding:10px;border-radius:14px;background:#fff0f2"><b style="font-size:19px;color:#b4233c">${rejected}</b><div style="font-size:8px;color:#777">Rejected</div></div>
- </div>
- <div style="font-size:9px;color:#888;margin-top:8px;text-align:center">${uniqueUsers} customer${uniqueUsers===1?"":"s"}</div>`;
- if(!rows.length){box.innerHTML='<div class="empty"><div class="big">📦</div><h3>No active bookings</h3><p>There are currently no bookings in the 20-day retention window.</p></div>';return}
- box.innerHTML=rows.map(b=>`<div class="card booking-card" style="margin-bottom:10px">
+ 
+ document.getElementById("statPending").textContent = pending;
+ document.getElementById("statConfirmed").textContent = confirmed;
+ document.getElementById("statRejected").textContent = rejected;
+ document.getElementById("countAll").textContent = rows.length;
+ document.getElementById("countPending").textContent = pending;
+ document.getElementById("countConfirmed").textContent = confirmed;
+ document.getElementById("countRejected").textContent = rejected;
+
+ if(!filtered.length){box.innerHTML='<div class="empty"><div class="big">📦</div><h3>No bookings in this category</h3><p>All bookings appear here for manager review.</p></div>';return}
+ box.innerHTML=filtered.map(b=>`<div class="card booking-card" style="margin-bottom:10px">
   <div style="display:flex;gap:11px;align-items:flex-start">
    <div class="mini-service">${service(b.serviceId).icon}</div>
    <div style="flex:1;min-width:0">
@@ -1016,6 +1103,7 @@ function renderManagerBookings(rows){
     <p style="margin:3px 0">📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p>
     <p style="margin:3px 0">⌖ ${esc(b.address||"Not provided")}</p>
     ${b.note?`<p style="margin:3px 0">📝 ${esc(b.note)}</p>`:""}
+    ${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}
     <div class="booking-delete-note">${esc(bookingCountdownText(b))}</div>
     ${managerActionButtons(b)}
     <div style="font-size:9px;color:#999;margin-top:8px">${new Date(b.createdAt).toLocaleString("en-IN")} ${b._userEmail?`• ${esc(b._userEmail)}`:""}</div>
@@ -1025,14 +1113,10 @@ function renderManagerBookings(rows){
 }
 function filterManagerBookings(q){
  q=(q||"").toLowerCase().trim();
- renderManagerBookings(MANAGER_BOOKINGS_CACHE.filter(b=>
+ const filtered = MANAGER_BOOKINGS_CACHE.filter(b =>
   [b.id,b._userName,b._userPhone,b._userEmail,b.address,b.note,service(b.serviceId).name].some(v=>String(v||"").toLowerCase().includes(q))
- ));
-}
-function openManager(){
- if(!isManager()){toast("Manager access is restricted");return}
- go("manager");
- setTimeout(loadManagerPanel,80);
+ );
+ renderManagerBookings(filtered);
 }
 
 function render(){
@@ -1042,7 +1126,7 @@ function render(){
  else if(route.page==="service")out=servicePage(route.service);
  else if(route.page==="book")out=bookPage(route.service);
  else if(route.page==="bookings")out=bookingsPage();
- else if(route.page==="manager")out=isManager()?managerPage():(toast("Manager access is restricted"),profilePage());
+ else if(route.page==="manager")out=IS_MANAGER?managerPage():(toast("Manager access is restricted"),profilePage());
 else if(route.page==="profile")out=profilePage();
  else if(route.page==="support")out=supportPage();
  else if(route.page==="about")out=aboutPage();
@@ -1091,8 +1175,6 @@ function openBookingSuccess(b){
 
 const BUSINESS_WHATSAPP="917859056418";
 const BUSINESS_PHONE="7859056418";
-// Manager access: replace this with the manager's Firebase/Google account email.
-const MANAGER_EMAILS=["sangamdialservice@gmail.com"];
 
 function orderMessage(b){
  const s=service(b.serviceId);
@@ -1107,7 +1189,7 @@ Address: ${b.address}
 Issue / Note: ${b.note||"Not provided"}
 Price: To be confirmed on contact
 Status: ${b.status}
-
+${b.rejectionReason ? `Rejection Reason: ${b.rejectionReason}` : ''}
 Please contact me regarding this service booking.`;
 }
 function openOrderMessages(b){
@@ -1168,6 +1250,7 @@ function openBooking(id){
   <div class="summary-line"><span>Note</span><b style="max-width:220px;text-align:right">${esc(b.note||"—")}</b></div>
   <div class="summary-line"><span>Price</span><b>Contact to confirm</b></div>
   <div class="summary-line"><span>Status</span><b>${esc(b.status||"Pending")}</b></div>
+  ${b.rejectionReason ? `<div class="summary-line"><span>Rejection Reason</span><b style="max-width:220px;text-align:right;color:#b33">${esc(b.rejectionReason)}</b></div>` : ''}
   ${b.managerNote?`<div class="summary-line"><span>Manager Note</span><b style="max-width:220px;text-align:right">${esc(b.managerNote)}</b></div>`:""}
  </div>
  <div class="booking-actions">${contactButtons(b)}</div>
@@ -1188,7 +1271,8 @@ function openMenu(){
  <button class="menu-row" onclick="closeModal();go('home')"><div class="mi">⌂</div><div><b>Home</b><small>Browse all services</small></div></button>
  <button class="menu-row" onclick="closeModal();go('bookings')"><div class="mi">▣</div><div><b>My Bookings</b><small>Track all orders</small></div></button>
  <button class="menu-row" onclick="closeModal();go('support')"><div class="mi">◉</div><div><b>Support</b><small>Contact support</small></div></button>
- <button class="menu-row" onclick="closeModal();go('profile')"><div class="mi">👤</div><div><b>Profile</b><small>Personal details & addresses</small></div></button>`;
+ <button class="menu-row" onclick="closeModal();go('profile')"><div class="mi">👤</div><div><b>Profile</b><small>Personal details & addresses</small></div></button>
+ ${IS_MANAGER ? `<button class="menu-row" onclick="closeModal();go('manager')"><div class="mi">📊</div><div><b>Manager Panel</b><small>Manage all bookings</small></div></button>` : ''}`;
  modal.classList.add("open","menu-modal");
 }
 function editProfile(){
