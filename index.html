@@ -80,7 +80,7 @@ button{cursor:pointer;border:0}
 @keyframes popularIn{from{opacity:0;transform:translateX(28px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes popularOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.985)}}
 .profile-address{font-size:9px;color:#888;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
- .service-availability{position:absolute;top:14px;right:12px;z-index:8;padding:8px 11px 8px 13px;border-radius:5px 0 0 5px;background:#fff;color:#138b58;font-size:9px;font-weight:950;letter-spacing:.2px;box-shadow:0 7px 16px rgba(20,20,50,.18);clip-path:polygon(8% 0,100% 0,100% 100%,8% 100%,0 50%);white-space:nowrap}.service-availability:after{content:"";position:absolute;left:0;top:50%;width:5px;height:5px;transform:translate(-50%,-50%);background:#fff;border-radius:50%}
+
  .hindi-tagline{margin:16px 0 4px;text-align:center;font-family:"Noto Serif Devanagari","Nirmala UI","Mangal",serif;font-size:22px;font-weight:800;letter-spacing:.2px;color:#6d35df;font-style:italic}
  .hindi-subtagline{text-align:center;color:#777;font-size:11px;font-weight:700;margin:0 0 16px}
  .manager-card{padding:18px;background:linear-gradient(135deg,#fff,#f8f2ff);border:1px solid #e8def8}
@@ -610,6 +610,7 @@ function bottom(active){
   <button class="nav-item ${active==="home"?"active":""}" onclick="go('home')"><span>⌂</span>Home</button>
   <button class="nav-item ${active==="bookings"?"active":""}" onclick="go('bookings')"><span>▣</span>Bookings</button>
   <button class="nav-item ${active==="support"?"active":""}" onclick="go('support')"><span>◉</span>Support</button>
+  <button class="nav-item ${active==="about"?"active":""}" onclick="go('about')"><span>ⓘ</span>About Us</button>
   <button class="nav-item ${active==="profile"?"active":""}" onclick="go('profile')"><span>♙</span>Profile</button>
  </nav>`;
 }
@@ -644,7 +645,6 @@ function home(){
  const recent=DB.bookings.slice().reverse().slice(0,2);
  return `<div class="screen">
   <div class="top-gradient home-head">
-   <div class="service-availability">Service available Within 24 Hours</div>
    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button></div>
    <div class="hello compact-hello">Hello, ${esc(DB.user.name||"User")} 👋</div>
    <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
@@ -673,7 +673,14 @@ function home(){
    <div class="card trust"><div class="trust-icon">🛡️</div><div><h4>Trusted Service At Your Doorstep</h4><p>Professional technicians • Price confirmed on contact • Service support</p></div></div>
    <div class="hindi-tagline">आपकी सुविधा, हमारी जिम्मेदारी</div>
    <div class="hindi-subtagline">एक कॉल करें, समाधान घर पे पाएँ</div>
-   <div class="section-title">About SANGAM</div>
+  </div>${bottom("home")}
+ </div>`;
+}
+function aboutPage(){
+ return `<div class="screen">
+  ${header("About Us")}
+  <div class="content">
+   <div class="section-title" style="margin-top:6px">SANGAM</div>
    <div class="card about-card">
     <img class="about-poster" src="assets/company-poster.jpg" alt="SANGAM company poster" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
     <div class="about-placeholder" style="display:none"><div><b>Company Poster</b><br><span>Upload your shop/company poster in GitHub at<br><code>assets/company-poster.jpg</code></span></div></div>
@@ -681,7 +688,9 @@ function home(){
    </div>
    <div class="section-title">Manager Details</div>
    <div class="card manager-card"><h3>SANGAM</h3><div class="manager-line"><b>Contact No.:</b> +91 7859056418</div><div class="manager-line"><b>WhatsApp:</b> +91 7859056418</div><div class="manager-line"><b>Address:</b> Saidpur Pusa, Samastipur (Bihar), PIN - 848125</div><div class="manager-actions"><a class="manager-action manager-call" href="tel:7859056418">☎ Call Manager</a><a class="manager-action manager-wa" href="https://wa.me/917859056418" target="_blank" rel="noopener">◉ WhatsApp</a></div></div>
-  </div>${bottom("home")}
+   <div class="hindi-tagline">आपकी सुविधा, हमारी जिम्मेदारी</div>
+   <div class="hindi-subtagline">एक कॉल करें, समाधान घर पे पाएँ</div>
+  </div>${bottom("about")}
  </div>`;
 }
 function bookingMini(b){
