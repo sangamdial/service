@@ -356,7 +356,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 @keyframes ringWave{0%{transform:scale(.5);opacity:0}22%{opacity:.75}100%{transform:scale(1.18);opacity:0}}
 @keyframes brandFloat{0%,18%,100%{opacity:0;transform:scale(.94) translateY(8px)}30%{opacity:1;transform:scale(1.02) translateY(0)}55%,85%{opacity:1;transform:scaleX(1.04) translateY(-2px)}}
 @keyframes servicePulse{0%,48%{opacity:0;transform:translateY(9px) scale(.96)}60%{opacity:1;transform:translateY(0) scale(1)}72%,100%{opacity:1;transform:translateY(-1px) scale(1)}}
-@keyframes readingFade{0%,62%{opacity:0}72%,100%{opacity:1}}@keyframes dotPulse{0%,100%{transform:translateY(0);opacity:.25}50%{transform:translateY(-5px);opacity:1}}50%{transform:translateY(-5px);opacity:1}}}
+@keyframes readingFade{0%,62%{opacity:0}72%,100%{opacity:1}}@keyframes dotPulse{0%,100%{transform:translateY(0);opacity:.25}50%{transform:translateY(-5px);opacity:1}}
 
 </style>
 </head>
@@ -418,8 +418,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 <div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">setTimeout(()=>document.getElementById('authLoading')?.classList.add('hide'),7000);
-</script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
@@ -429,7 +428,8 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
    Storage layer is deliberately isolated so a real API/DB
    can replace it later without rebuilding the UI.
    ========================================================= */
-const STORAGE_BASE_KEY = "sangam_dial_service_v2";
+setTimeout(()=>document.getElementById("authLoading")?.classList.add("hide"),7000);
+ const STORAGE_BASE_KEY = "sangam_dial_service_v2";
 let STORAGE_KEY = STORAGE_BASE_KEY + "_guest";
 let AUTH_UID = null;
 let FIREBASE_READY = false;
@@ -561,7 +561,7 @@ function firebaseFriendlyError(err){
  const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one."};
  return map[code]||err?.message||"Sign-in failed. Please try again.";
 }
-async async function handleAuthUser(user){
+async function handleAuthUser(user){
  document.getElementById("authLoading")?.classList.remove("hide");
  try{
   CLOUD_LOADING=true;
