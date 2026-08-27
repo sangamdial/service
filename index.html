@@ -655,6 +655,7 @@ function startBookingCleanupTimer(){
    if(created)el.textContent=bookingCountdownText({createdAt:new Date(created).toISOString()});
   });
   if(removed&&route.page==="bookings")render();
+  if(route.page==="manager")renderManagerBookings(MANAGER_BOOKINGS_CACHE);
  },60000);
 }
 
@@ -790,7 +791,7 @@ function aboutPage(){
     </div>
    </div>
    <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;border:1px solid #eee;box-shadow:0 8px 24px rgba(0,0,0,.06)">
-    <iframe src="poster.jpeg" title="Sangam Dial Service Poster" loading="lazy" style="display:block;width:100%;height:360px;border:0;background:#fff" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"></iframe>
+    <img src="poster.jpeg" alt="Sangam Dial Service Poster" loading="lazy" style="display:block;width:100%;height:auto;max-height:520px;object-fit:contain;background:#fff">
     <div style="display:none;min-height:180px;align-items:center;justify-content:center;text-align:center;padding:25px;background:linear-gradient(135deg,#f7f1ff,#fff)"><div><div style="font-size:38px;margin-bottom:8px">🖼️</div><b>Service Poster</b><div style="font-size:10px;color:#888;margin-top:5px">Upload <b>poster.html</b> to the GitHub repository.</div></div></div>
    </div>
   </div>
@@ -862,6 +863,7 @@ function profilePage(){
  <div class="content">
   <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Synced</div></div></div></div>
   <div class="card menu-card">
+   ${isManager()?`<button class="menu-row" onclick="openManager()"><div class="mi">📊</div><div><b>Manager Panel</b><small>View all customer bookings</small></div><b style="margin-left:auto">›</b></button>`:""}
    <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
@@ -884,6 +886,96 @@ function supportPage(){
  </div>${bottom("support")}</div>`;
 }
 
+
+function isManager(){
+ const email=(firebaseAuth?.currentUser?.email||DB.user.email||"").trim().toLowerCase();
+ return !!email && MANAGER_EMAILS.map(x=>x.toLowerCase()).includes(email);
+}
+function managerPage(){
+ return `<div class="screen">${header("Manager Panel")}
+  <div class="content">
+   <div class="card" style="padding:18px;background:linear-gradient(135deg,#1d123d,#7132d8);color:#fff;margin-bottom:12px">
+    <div style="font-size:10px;opacity:.72;text-transform:uppercase;letter-spacing:1px;font-weight:900">Management Dashboard</div>
+    <h2 style="margin:5px 0 4px">All Customer Bookings</h2>
+    <p style="margin:0;font-size:11px;opacity:.82">View bookings from all signed-in customers in one place.</p>
+   </div>
+   <div id="managerStats" class="card" style="padding:12px;margin-bottom:12px">Loading booking statistics…</div>
+   <div class="card" style="padding:12px;margin-bottom:12px">
+    <input id="managerSearch" class="field-input" placeholder="Search name, phone, order ID or service…" oninput="filterManagerBookings(this.value)">
+   </div>
+   <div id="managerBookings"><div class="empty"><div class="big">☁️</div><h3>Loading bookings…</h3><p>Please wait while manager data is loaded.</p></div></div>
+  </div>
+  ${bottom("profile")}</div>`;
+}
+let MANAGER_BOOKINGS_CACHE=[];
+async function loadManagerPanel(){
+ if(!isManager()){
+  toast("Manager access is restricted");
+  go("profile");
+  return;
+ }
+ const box=document.getElementById("managerBookings"),stats=document.getElementById("managerStats");
+ if(!box||!stats)return;
+ try{
+  const snap=await firestore.collection("users").get();
+  const rows=[];
+  snap.forEach(doc=>{
+   const d=doc.data()||{}, user=d.user||{};
+   (Array.isArray(d.bookings)?d.bookings:[]).forEach(b=>{
+    const createdAt=b.createdAt||new Date().toISOString();
+    const expires=bookingDeleteAt(b);
+    if(expires && expires<=Date.now())return;
+    rows.push({...b,_uid:doc.id,_userName:user.name||b.name||"User",_userPhone:user.phone||b.phone||"Not provided",_userEmail:user.email||""});
+   });
+  });
+  rows.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  MANAGER_BOOKINGS_CACHE=rows;
+  renderManagerBookings(rows);
+ }catch(err){
+  console.error("Manager panel error",err);
+  stats.innerHTML='<div style="font-size:12px;font-weight:800">Manager data could not be loaded.</div><div style="font-size:10px;color:#777;margin-top:4px">Check Firebase Firestore rules: the manager account must have read access to the <b>users</b> collection.</div>';
+  box.innerHTML='<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading all customer records.</p></div>';
+ }
+}
+function renderManagerBookings(rows){
+ const stats=document.getElementById("managerStats"),box=document.getElementById("managerBookings");
+ if(!stats||!box)return;
+ const uniqueUsers=new Set(rows.map(x=>x._uid)).size;
+ const upcoming=rows.filter(x=>String(x.status).toLowerCase()!=="completed").length;
+ stats.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+  <div style="padding:12px;border-radius:14px;background:#f5efff"><b style="font-size:20px;color:#7132d8">${rows.length}</b><div style="font-size:9px;color:#777">Total Bookings</div></div>
+  <div style="padding:12px;border-radius:14px;background:#eff8ff"><b style="font-size:20px;color:#1675b9">${uniqueUsers}</b><div style="font-size:9px;color:#777">Customers</div></div>
+  <div style="padding:12px;border-radius:14px;background:#effaf3"><b style="font-size:20px;color:#16834b">${upcoming}</b><div style="font-size:9px;color:#777">Active</div></div>
+ </div>`;
+ if(!rows.length){box.innerHTML='<div class="empty"><div class="big">📦</div><h3>No active bookings</h3><p>There are currently no bookings in the 20-day retention window.</p></div>';return}
+ box.innerHTML=rows.map(b=>`<div class="card booking-card" style="margin-bottom:10px">
+  <div style="display:flex;gap:11px;align-items:flex-start">
+   <div class="mini-service">${service(b.serviceId).icon}</div>
+   <div style="flex:1;min-width:0">
+    <div style="display:flex;justify-content:space-between;gap:8px"><h3 style="margin:0">${esc(service(b.serviceId).name)} Service</h3><span class="status">${esc(b.status||"Confirmed")}</span></div>
+    <p style="margin:4px 0"><b>Order:</b> ${esc(b.id)}</p>
+    <p style="margin:3px 0">👤 <b>${esc(b._userName)}</b> • ${esc(b._userPhone)}</p>
+    <p style="margin:3px 0">📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p>
+    <p style="margin:3px 0">⌖ ${esc(b.address||"Not provided")}</p>
+    ${b.note?`<p style="margin:3px 0">📝 ${esc(b.note)}</p>`:""}
+    <div class="booking-delete-note">${esc(bookingCountdownText(b))}</div>
+    <div style="font-size:9px;color:#999;margin-top:8px">${new Date(b.createdAt).toLocaleString("en-IN")} ${b._userEmail?`• ${esc(b._userEmail)}`:""}</div>
+   </div>
+  </div>
+ </div>`).join("");
+}
+function filterManagerBookings(q){
+ q=(q||"").toLowerCase().trim();
+ renderManagerBookings(MANAGER_BOOKINGS_CACHE.filter(b=>
+  [b.id,b._userName,b._userPhone,b._userEmail,b.address,b.note,service(b.serviceId).name].some(v=>String(v||"").toLowerCase().includes(q))
+ ));
+}
+function openManager(){
+ if(!isManager()){toast("Manager access is restricted");return}
+ go("manager");
+ setTimeout(loadManagerPanel,80);
+}
+
 function render(){
  const app=document.getElementById("app");
  let out="";
@@ -891,7 +983,8 @@ function render(){
  else if(route.page==="service")out=servicePage(route.service);
  else if(route.page==="book")out=bookPage(route.service);
  else if(route.page==="bookings")out=bookingsPage();
- else if(route.page==="profile")out=profilePage();
+ else if(route.page==="manager")out=isManager()?managerPage():(toast("Manager access is restricted"),profilePage());
+else if(route.page==="profile")out=profilePage();
  else if(route.page==="support")out=supportPage();
  else if(route.page==="about")out=aboutPage();
  app.innerHTML=out;
@@ -938,6 +1031,8 @@ function openBookingSuccess(b){
 
 const BUSINESS_WHATSAPP="917859056418";
 const BUSINESS_PHONE="7859056418";
+// Manager access: replace this with the manager's Firebase/Google account email.
+const MANAGER_EMAILS=["YOUR_MANAGER_EMAIL@gmail.com"];
 
 function orderMessage(b){
  const s=service(b.serviceId);
