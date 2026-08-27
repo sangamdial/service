@@ -529,7 +529,7 @@ async function hydrateCloudUser(user){
  }else{
    const cloud=normalizeCloudData(snap.data());
    DB=await mergeLocalIntoCloud(user.uid,cloud);
-   DB.user={...DB.user,email:DB.user.email||user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
+   DB.user={...DB.user,email:user.email||DB.user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
    const removed=pruneExpiredBookings(DB);
     saveState(false);
     if(removed)scheduleCloudSync();
@@ -863,7 +863,7 @@ function profilePage(){
  <div class="content">
   <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s) • ☁ Synced</div></div></div></div>
   <div class="card menu-card">
-   ${isManager()?`<button class="menu-row" onclick="openManager()"><div class="mi">📊</div><div><b>Manager Panel</b><small>View all customer bookings</small></div><b style="margin-left:auto">›</b></button>`:""}
+   ${isManager()?`<button class="menu-row" onclick="openManager()"><div class="mi">📊</div><div><b>Manager Panel 📊</b><small>Manage all customer bookings</small></div><b style="margin-left:auto">›</b></button>`:""}
    <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
    <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
@@ -888,8 +888,9 @@ function supportPage(){
 
 
 function isManager(){
- const email=(firebaseAuth?.currentUser?.email||DB.user.email||"").trim().toLowerCase();
- return !!email && MANAGER_EMAILS.map(x=>x.toLowerCase()).includes(email);
+ const authEmail=(window.firebaseAuth?.currentUser?.email||"").trim().toLowerCase();
+ const dbEmail=(DB?.user?.email||"").trim().toLowerCase();
+ return MANAGER_EMAILS.some(x=>x.trim().toLowerCase()===authEmail || x.trim().toLowerCase()===dbEmail);
 }
 function managerPage(){
  return `<div class="screen">${header("Manager Panel")}
@@ -1046,6 +1047,7 @@ else if(route.page==="profile")out=profilePage();
  else if(route.page==="support")out=supportPage();
  else if(route.page==="about")out=aboutPage();
  app.innerHTML=out;
+ if(route.page==="manager") setTimeout(loadManagerPanel,50);
 }
 function selectChoice(btn,type){
  document.querySelectorAll(type==="date"?"#dateGrid .choice":"#timeGrid .choice").forEach(x=>x.classList.remove("selected"));
