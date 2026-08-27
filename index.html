@@ -561,7 +561,7 @@ function firebaseFriendlyError(err){
  const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/invalid-phone-number":"Please enter a valid phone number.","auth/quota-exceeded":"Phone verification limit reached. Please try later.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication.","auth/invalid-verification-code":"The OTP is incorrect. Please try again.","auth/code-expired":"The OTP expired. Please request a new one."};
  return map[code]||err?.message||"Sign-in failed. Please try again.";
 }
-async function handleAuthUser(user){
+async async function handleAuthUser(user){
  document.getElementById("authLoading")?.classList.remove("hide");
  try{
   CLOUD_LOADING=true;
@@ -897,7 +897,7 @@ function managerPage(){
    <div class="card" style="padding:18px;background:linear-gradient(135deg,#1d123d,#7132d8);color:#fff;margin-bottom:12px">
     <div style="font-size:10px;opacity:.72;text-transform:uppercase;letter-spacing:1px;font-weight:900">Management Dashboard</div>
     <h2 style="margin:5px 0 4px">All Customer Bookings</h2>
-    <p style="margin:0;font-size:11px;opacity:.82">View bookings from all signed-in customers in one place.</p>
+    <p style="margin:0;font-size:11px;opacity:.82">View bookings from all signed-in customers in one place.</p><div style="margin-top:8px;font-size:9px;opacity:.68">Manager: sangamdialservice@gmail.com</div>
    </div>
    <div id="managerStats" class="card" style="padding:12px;margin-bottom:12px">Loading booking statistics…</div>
    <div class="card" style="padding:12px;margin-bottom:12px">
@@ -937,16 +937,73 @@ async function loadManagerPanel(){
   box.innerHTML='<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading all customer records.</p></div>';
  }
 }
+
+async function updateBookingStatusManager(uidValue, bookingId, newStatus){
+ if(!isManager()){toast("Manager access is restricted");return}
+ if(!firestore){toast("Firestore is not available");return}
+ const note=newStatus==="Confirmed" ? "Booking confirmed by manager." : "Booking rejected by manager.";
+ try{
+  const ref=firestore.collection("users").doc(uidValue);
+  await firestore.runTransaction(async tx=>{
+   const snap=await tx.get(ref);
+   if(!snap.exists)throw new Error("Customer record not found");
+   const data=snap.data()||{};
+   const bookings=Array.isArray(data.bookings)?data.bookings.map(b=>{
+    if(b.id!==bookingId)return b;
+    return {...b,status:newStatus,managerNote:note,managerUpdatedAt:new Date().toISOString(),managerUpdatedBy:"sangamdialservice@gmail.com"};
+   }):[];
+   const target=bookings.find(b=>b.id===bookingId);
+   if(!target)throw new Error("Booking not found");
+   const notifications=Array.isArray(data.notifications)?data.notifications.slice():[];
+   const s=service(target.serviceId);
+   notifications.push({
+    id:"N_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+    title:newStatus==="Confirmed"?"Booking Confirmed":"Booking Rejected",
+    text:newStatus==="Confirmed"
+      ?`${s.name} booking ${target.id} has been confirmed by the manager.`
+      :`${s.name} booking ${target.id} was rejected by the manager.`,
+    createdAt:new Date().toISOString(),
+    read:false,
+    bookingId:target.id
+   });
+   tx.set(ref,{
+    bookings,
+    notifications,
+    updatedAt:new Date().toISOString(),
+    managerLastAction:{bookingId:target.id,status:newStatus,at:new Date().toISOString(),by:"sangamdialservice@gmail.com"}
+   },{merge:true});
+  });
+  toast(newStatus==="Confirmed"?"Booking confirmed":"Booking rejected");
+  await loadManagerPanel();
+ }catch(err){
+  console.error("Manager status update failed",err);
+  toast("Could not update booking. Check Firestore rules.");
+ }
+}
+
+function managerActionButtons(b){
+ if(b.status==="Confirmed")return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#effaf3;color:#187844;font-size:11px;font-weight:800">✓ Confirmed by Manager</div>`;
+ if(b.status==="Rejected")return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#fff0f2;color:#b4233c;font-size:11px;font-weight:800">✕ Rejected by Manager</div>`;
+ return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+  <button class="full" style="background:#17844b;color:#fff" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Confirmed')">✓ Confirm Booking</button>
+  <button class="full pink" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Rejected')">✕ Reject Booking</button>
+ </div>`;
+}
+
 function renderManagerBookings(rows){
  const stats=document.getElementById("managerStats"),box=document.getElementById("managerBookings");
  if(!stats||!box)return;
  const uniqueUsers=new Set(rows.map(x=>x._uid)).size;
- const upcoming=rows.filter(x=>String(x.status).toLowerCase()!=="completed").length;
- stats.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-  <div style="padding:12px;border-radius:14px;background:#f5efff"><b style="font-size:20px;color:#7132d8">${rows.length}</b><div style="font-size:9px;color:#777">Total Bookings</div></div>
-  <div style="padding:12px;border-radius:14px;background:#eff8ff"><b style="font-size:20px;color:#1675b9">${uniqueUsers}</b><div style="font-size:9px;color:#777">Customers</div></div>
-  <div style="padding:12px;border-radius:14px;background:#effaf3"><b style="font-size:20px;color:#16834b">${upcoming}</b><div style="font-size:9px;color:#777">Active</div></div>
- </div>`;
+ const pending=rows.filter(x=>x.status==="Pending").length;
+ const confirmed=rows.filter(x=>x.status==="Confirmed").length;
+ const rejected=rows.filter(x=>x.status==="Rejected").length;
+ stats.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+  <div style="padding:10px;border-radius:14px;background:#f5efff"><b style="font-size:19px;color:#7132d8">${rows.length}</b><div style="font-size:8px;color:#777">Total</div></div>
+  <div style="padding:10px;border-radius:14px;background:#fff8e8"><b style="font-size:19px;color:#a36a00">${pending}</b><div style="font-size:8px;color:#777">Pending</div></div>
+  <div style="padding:10px;border-radius:14px;background:#effaf3"><b style="font-size:19px;color:#16834b">${confirmed}</b><div style="font-size:8px;color:#777">Confirmed</div></div>
+  <div style="padding:10px;border-radius:14px;background:#fff0f2"><b style="font-size:19px;color:#b4233c">${rejected}</b><div style="font-size:8px;color:#777">Rejected</div></div>
+ </div>
+ <div style="font-size:9px;color:#888;margin-top:8px;text-align:center">${uniqueUsers} customer${uniqueUsers===1?"":"s"}</div>`;
  if(!rows.length){box.innerHTML='<div class="empty"><div class="big">📦</div><h3>No active bookings</h3><p>There are currently no bookings in the 20-day retention window.</p></div>';return}
  box.innerHTML=rows.map(b=>`<div class="card booking-card" style="margin-bottom:10px">
   <div style="display:flex;gap:11px;align-items:flex-start">
@@ -959,6 +1016,7 @@ function renderManagerBookings(rows){
     <p style="margin:3px 0">⌖ ${esc(b.address||"Not provided")}</p>
     ${b.note?`<p style="margin:3px 0">📝 ${esc(b.note)}</p>`:""}
     <div class="booking-delete-note">${esc(bookingCountdownText(b))}</div>
+    ${managerActionButtons(b)}
     <div style="font-size:9px;color:#999;margin-top:8px">${new Date(b.createdAt).toLocaleString("en-IN")} ${b._userEmail?`• ${esc(b._userEmail)}`:""}</div>
    </div>
   </div>
@@ -1014,9 +1072,9 @@ function confirmBooking(serviceId){
  const userServiceOrders=DB.bookings.filter(x=>x.serviceId===serviceId && String(x.name||"").trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi,"").toUpperCase()===customerCode);
  const serial=userServiceOrders.length+1;
  const createdAt=new Date().toISOString();
-  const booking={id:`SDS_${serviceCode}_${serial}`,serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt,expiresAt:new Date(new Date(createdAt).getTime()+BOOKING_RETENTION_MS).toISOString()};
+  const booking={id:`SDS_${serviceCode}_${serial}`,serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Pending",createdAt,expiresAt:new Date(new Date(createdAt).getTime()+BOOKING_RETENTION_MS).toISOString()};
  DB.user.name=name;DB.user.phone=phone;DB.user.profileComplete=true;DB.bookings.push(booking);
- DB.notifications.push({id:uid("N"),title:"Booking Confirmed",text:`${s.name} service booked for ${booking.date} at ${booking.time}.`,createdAt:new Date().toISOString(),read:false});
+ DB.notifications.push({id:uid("N"),title:"Booking Received",text:`${s.name} service request received for ${booking.date} at ${booking.time}. Waiting for manager confirmation.`,createdAt:new Date().toISOString(),read:false});
  saveState();
  openBookingSuccess(booking);
  openOrderMessages(booking);
@@ -1032,7 +1090,7 @@ function openBookingSuccess(b){
 const BUSINESS_WHATSAPP="917859056418";
 const BUSINESS_PHONE="7859056418";
 // Manager access: replace this with the manager's Firebase/Google account email.
-const MANAGER_EMAILS=["YOUR_MANAGER_EMAIL@gmail.com"];
+const MANAGER_EMAILS=["sangamdialservice@gmail.com"];
 
 function orderMessage(b){
  const s=service(b.serviceId);
@@ -1107,6 +1165,8 @@ function openBooking(id){
   <div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div>
   <div class="summary-line"><span>Note</span><b style="max-width:220px;text-align:right">${esc(b.note||"—")}</b></div>
   <div class="summary-line"><span>Price</span><b>Contact to confirm</b></div>
+  <div class="summary-line"><span>Status</span><b>${esc(b.status||"Pending")}</b></div>
+  ${b.managerNote?`<div class="summary-line"><span>Manager Note</span><b style="max-width:220px;text-align:right">${esc(b.managerNote)}</b></div>`:""}
  </div>
  <div class="booking-actions">${contactButtons(b)}</div>
  <div class="order-share-note">Order details are automatically formatted for Call, Text and WhatsApp.</div>`;
