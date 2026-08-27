@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ff4f86">
+<title>SANGAM DIAL SERVICE</title>
+<style>
+:root{
+  --pink:#f73577;--pink2:#ff6b91;--purple:#6d35df;--blue:#258de8;--green:#16a765;
+  --text:#20202a;--muted:#777884;--bg:#f6f7fb;--card:#fff;--line:#ececf3;
+  --shadow:0 10px 30px rgba(35,28,80,.09);--radius:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#e9eaf0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+body{min-height:100vh}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0}
+.app{width:min(100%,430px);min-height:100vh;margin:auto;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+.screen{min-height:100vh;padding-bottom:92px}
+.top-gradient{background:linear-gradient(135deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);color:#fff}
+.home-head{padding:20px 18px 22px;border-radius:0 0 30px 30px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.icon-btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.17);color:#fff;font-size:21px;display:grid;place-items:center}
+.hello{font-size:14px;margin-top:14px;opacity:.92}.hello strong{font-size:25px;display:block;line-height:1.2;margin-top:4px}
+.search{margin-top:18px;background:#fff;border-radius:15px;height:51px;padding:0 8px 0 16px;display:flex;align-items:center;box-shadow:0 7px 20px rgba(49,21,85,.12)}
+.search input{border:0;outline:0;flex:1;color:#444;min-width:0}.search button{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6c28dd,#7d45ed);color:#fff;font-size:19px}
+.content{padding:14px 14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.categories{padding:14px 9px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px 5px}
+.cat{text-align:center;font-size:11px;font-weight:700;color:#34343e}
+.cat-icon{width:55px;height:55px;border-radius:15px;margin:0 auto 7px;background:linear-gradient(145deg,#f3f5fa,#fff);display:grid;place-items:center;font-size:27px;border:1px solid #eef0f6}
+.section-title{font-size:17px;font-weight:800;margin:20px 4px 11px}
+.banner{padding:17px;background:linear-gradient(120deg,#1f98e5,#7836dd);color:#fff;display:flex;align-items:center;justify-content:space-between;overflow:hidden}
+.banner h3{margin:0 0 4px;font-size:17px}.banner p{margin:0;font-size:11px;opacity:.9}
+.arrow{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:22px}
+.trust{padding:16px;display:flex;gap:13px;align-items:center}.trust-icon{width:48px;height:48px;border-radius:14px;background:#edf6ff;display:grid;place-items:center;font-size:24px}.trust h4{margin:0 0 3px}.trust p{margin:0;color:var(--muted);font-size:11px}
+.service-card{overflow:hidden}.service-visual{height:160px;background:linear-gradient(135deg,#e6f7ff,#b7dff8 50%,#e6e1ff);position:relative;display:grid;place-items:center}.service-visual .ac{font-size:70px;filter:drop-shadow(0 10px 8px rgba(0,0,0,.13))}
+.service-body{padding:17px}.service-body h2{margin:0 0 8px;font-size:21px}.service-body p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 16px}
+.list-box{padding:14px;border-radius:18px;background:#fff;border:1px solid #eee}.list-title{font-weight:800;margin-bottom:9px}.check{display:flex;gap:9px;margin:8px 0;font-size:12px;color:#444}.check i{font-style:normal;color:#18a965;font-size:15px}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:13px}.feature{text-align:center;padding:10px 4px;border-radius:14px;background:#fafafe;font-size:10px;font-weight:700}.feature span{display:block;font-size:22px;margin-bottom:4px}
+.price-row{margin-top:14px;padding:12px 3px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.price small{display:block;color:#666}.price strong{font-size:22px;color:#159d5f}.primary{background:linear-gradient(135deg,#12ad67,#0c9959);color:#fff;border-radius:13px;padding:13px 18px;font-weight:800}.purple{background:linear-gradient(135deg,#7126df,#8b42eb);color:#fff}.pink{background:linear-gradient(135deg,#f22f73,#ff598a);color:#fff}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,430px);height:76px;background:rgba(255,255,255,.97);backdrop-filter:blur(15px);border-top:1px solid #e9e9f0;display:grid;grid-template-columns:repeat(5,1fr);z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{background:none;color:#8b8b97;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.nav-item span{font-size:21px}.nav-item.active{color:#7a30df}
+.page-head{padding:15px 15px 16px;color:#fff;display:flex;align-items:center;gap:12px}.page-head h2{margin:0;font-size:18px;flex:1}.back{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:22px}
+.tabs{display:flex;gap:7px;padding:13px 14px;overflow:auto}.tab{padding:9px 14px;border-radius:20px;background:#fff;border:1px solid #e8e8ef;white-space:nowrap;font-size:12px;font-weight:700;color:#666}.tab.active{background:#7232dc;color:#fff;border-color:#7232dc}
+.booking{padding:14px}.booking-card{padding:14px;margin-bottom:11px}.booking-top{display:flex;gap:12px}.mini-service{width:70px;height:70px;border-radius:15px;background:linear-gradient(135deg,#e3f7ff,#d7caff);display:grid;place-items:center;font-size:34px}.booking-card h3{margin:1px 0 5px;font-size:15px}.booking-card p{margin:3px 0;color:#777;font-size:11px}.status{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:20px;background:#e8fff4;color:#0b9b59;font-size:10px;font-weight:800}.empty{text-align:center;padding:45px 20px;color:#777}.empty .big{font-size:52px}
+.profile-card{padding:18px;margin-bottom:12px}.avatar{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#ff4d87,#7034dd);color:#fff;display:grid;place-items:center;font-size:27px;font-weight:900}.profile-name{font-size:19px;font-weight:800}.profile-phone{font-size:12px;color:#777;margin-top:3px}.menu-card{overflow:hidden}.menu-row{width:100%;background:#fff;padding:16px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #eee;text-align:left}.menu-row:last-child{border:0}.menu-row .mi{width:40px;height:40px;border-radius:12px;background:#f3f2ff;display:grid;place-items:center;font-size:20px}.menu-row b{font-size:13px}.menu-row small{display:block;color:#888;margin-top:2px}
+.form{padding:14px}.field{margin-bottom:13px}.field label{font-size:12px;font-weight:800;display:block;margin:0 0 7px}.field input,.field textarea,.field select{width:100%;border:1px solid #e5e5ed;background:#fff;border-radius:13px;padding:12px;outline:none}.field textarea{min-height:90px;resize:vertical}.date-grid,.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.choice{background:#fff;border:1px solid #e5e5ed;border-radius:12px;padding:10px 5px;text-align:center;font-size:10px;font-weight:800}.choice.selected{background:#7130dc;color:#fff;border-color:#7130dc}.summary{padding:14px;margin-bottom:12px}.summary-line{display:flex;justify-content:space-between;padding:7px 0;font-size:12px}.summary-line.total{border-top:1px solid #eee;margin-top:5px;padding-top:12px;font-weight:900;font-size:15px}.sticky-action{padding:14px;position:sticky;bottom:0;background:rgba(246,247,251,.94);backdrop-filter:blur(10px);z-index:10}.full{width:100%;height:50px;border-radius:14px;font-weight:900}
+.modal{position:fixed;inset:0;background:rgba(20,17,35,.48);display:none;align-items:flex-end;justify-content:center;z-index:100}.modal.open{display:flex}.sheet{width:min(100%,430px);background:#fff;border-radius:26px 26px 0 0;padding:18px;max-height:88vh;overflow:auto}.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.sheet-head h3{margin:0}.close{background:#f1f1f6;border-radius:50%;width:34px;height:34px}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:88px;background:#25242c;color:#fff;padding:11px 16px;border-radius:12px;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:390px;text-align:center}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.splash{position:fixed;inset:0;background:linear-gradient(145deg,#ef3b7b,#6c35df 60%,#2098e6);z-index:500;display:flex;align-items:center;justify-content:center;color:#fff}.splash.hide{animation:fade .5s forwards}@keyframes fade{to{opacity:0;visibility:hidden}}.splash-inner{text-align:center}.gear{font-size:88px;line-height:1;margin-bottom:15px}.splash h1{font-size:36px;margin:0;font-style:italic}.splash h2{font-size:24px;margin:0}.splash p{margin:12px 0 28px;opacity:.9}.splash button{padding:14px 60px;border-radius:30px;background:#fff;color:#e72f74;font-weight:900}
+.notice{padding:12px 14px;border-radius:14px;background:#fff7df;border:1px solid #ffe7a6;color:#755500;font-size:11px;margin-bottom:12px}
+
+.onboarding-open .modal{z-index:9999}
+.onboard{padding:6px 3px 18px}
+.onboard-brand{display:flex;align-items:center;gap:9px;margin:2px 0 18px}
+.onboard-brand>div:last-child{display:flex;flex-direction:column}
+.onboard-brand b{font-size:15px;letter-spacing:1.5px}
+.onboard-brand small{font-size:8px;letter-spacing:2px;color:#8a55df;margin-top:2px}
+.onboard-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#f33b78,#7135e8);color:#fff;display:grid;place-items:center;font-weight:1000;font-size:22px;box-shadow:0 10px 25px rgba(112,48,220,.25)}
+.onboard-icon{width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#f8eaff,#e9f3ff);display:grid;place-items:center;font-size:27px;margin-bottom:10px}
+.onboard h2{margin:0;font-size:25px;letter-spacing:-.6px}
+.onboard-sub{font-size:11px;line-height:1.55;color:#777;margin:7px 0 18px}
+.onboard .field{margin-bottom:11px}
+.onboard .field label span{color:#e33}
+.onboard .field label small{font-size:9px;color:#999;font-weight:500}
+.onboard input,.onboard textarea{background:#fafbff;border:1px solid #e3e3ef}
+.onboard-btn{height:50px;margin-top:4px;font-size:13px}
+.onboard-note{text-align:center;font-size:9px;color:#999;margin-top:10px}
+.popular-heading{display:flex;align-items:center;justify-content:space-between}
+.carousel-dots{display:flex;gap:5px;align-items:center}
+.carousel-dots i{width:5px;height:5px;border-radius:99px;background:#d7d0e9;transition:.25s}
+.carousel-dots i.active{width:17px;background:#7132dc}
+.popular-carousel{overflow:hidden}
+.popular-slide{animation:popularIn .42s ease both}
+.popular-carousel.slide-out .popular-slide{animation:popularOut .23s ease both}
+.popular-carousel.slide-in .popular-slide{animation:popularIn .42s ease both}
+.popular-kicker{font-size:8px;letter-spacing:1.5px;font-weight:1000;color:#7a36df;margin-bottom:4px}
+@keyframes popularIn{from{opacity:0;transform:translateX(28px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes popularOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.985)}}
+.profile-address{font-size:9px;color:#888;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+
+.contact-price strong{font-size:16px!important;color:#6d35df!important;display:block;animation:none!important}
+.contact-price em{display:block;font-style:normal;font-size:9px;color:#888;margin-top:2px}
+.contact-pricing-note{display:flex;gap:12px;align-items:center;padding:3px}
+.cp-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#f2eaff,#e8f4ff);color:#7130dc;font-weight:900;font-size:20px}
+.contact-pricing-note b{display:block;font-size:12px}
+.contact-pricing-note span{display:block;color:#777;font-size:10px;line-height:1.45;margin-top:3px}
+.location-card{margin-top:2px}
+.location-main{display:flex;gap:10px;align-items:center;cursor:pointer}
+.location-pin{width:40px;height:40px;border-radius:12px;background:#f0ebff;color:#7130dc;display:grid;place-items:center;font-size:21px}
+.current-location-btn{margin-top:11px;width:100%;height:42px;border-radius:12px;background:linear-gradient(135deg,#eef7ff,#f5efff);color:#5c32c5;font-size:11px;font-weight:900;border:1px solid #e1dafa;transition:.25s}
+.current-location-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(92,50,197,.12)}
+.map-hint{font-size:9px;color:#888;margin-top:7px;padding-left:2px}
+.booking-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.contact-action{height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:900;transition:.22s;box-shadow:0 6px 15px rgba(20,20,40,.07);text-decoration:none}
+.contact-action:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(20,20,40,.12)}
+.call-action{background:#e9fff4;color:#0b9d5a}
+.sms-action{background:#eef6ff;color:#2379d7}
+.wa-action{background:#e9fff0;color:#14944f}
+.order-share-note{font-size:9px;color:#999;text-align:center;margin-top:8px;line-height:1.35}
+
+@media(min-width:700px){.app{border-radius:25px;margin:20px auto;min-height:calc(100vh - 40px)}.bottom-nav{position:fixed;bottom:20px;border-radius:0 0 25px 25px}}
+
+
+/* ===== REALISTIC BUSINESS VISUAL SYSTEM ===== */
+.categories{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px;background:linear-gradient(180deg,#fff,#f8f8fc)}
+.cat{position:relative;text-align:left;background:rgba(255,255,255,.94);border:1px solid rgba(25,29,45,.07);border-radius:22px;padding:0;overflow:hidden;min-height:155px;box-shadow:0 8px 24px rgba(28,31,55,.07);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease,border-color .35s ease}
+.cat:hover{transform:translateY(-7px);box-shadow:0 18px 40px rgba(28,31,55,.14);border-color:rgba(111,48,220,.18)}
+.cat:active{transform:scale(.975)}
+.service-thumb{height:112px;position:relative;overflow:hidden;background:#edf1f6}
+.service-thumb:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,16,30,.02),rgba(10,16,30,.36));pointer-events:none}
+.service-thumb:before{content:"";position:absolute;width:80px;height:80px;border-radius:50%;right:-24px;top:-30px;background:rgba(255,255,255,.25);filter:blur(2px);z-index:2;animation:photoOrb 5s ease-in-out infinite alternate}
+.service-photo{width:100%;height:100%;display:block;object-fit:cover;object-position:center;transform:scale(1.02);transition:transform .8s cubic-bezier(.2,.75,.2,1),filter .5s ease}
+.cat:hover .service-photo{transform:scale(1.11);filter:saturate(1.08) contrast(1.03)}
+.cat-name{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 12px 11px;background:#fff}
+.cat-name b{font-size:12px;line-height:1.15}.cat-name small{font-size:8px;color:#7650c8;letter-spacing:.7px;white-space:nowrap}
+.photo-art{position:relative;width:100%;height:100%;overflow:hidden;background:#e9edf3}
+.photo-art.detail{height:230px}
+.photo-art img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.02);filter:saturate(.98) contrast(1.02);transition:transform 1.2s cubic-bezier(.16,.72,.2,1),filter .7s ease}
+.service-card:hover .photo-art img{transform:scale(1.065);filter:saturate(1.05) contrast(1.04)}
+.photo-art .photo-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,17,30,.03) 35%,rgba(10,17,30,.62) 100%)}
+.photo-art .photo-shine{position:absolute;inset:-20% -70%;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent);transform:skewX(-18deg);animation:photoShine 5.5s ease-in-out infinite}
+.photo-art .photo-badge{position:absolute;left:13px;bottom:13px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.91);backdrop-filter:blur(12px);font-size:9px;font-weight:900;letter-spacing:.4px;color:#202333;box-shadow:0 7px 20px rgba(0,0,0,.14)}
+.photo-art .photo-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#19b96b;margin-right:5px;box-shadow:0 0 0 0 rgba(25,185,107,.5);animation:livePulse 1.8s infinite}
+.visual-label{position:absolute!important;right:12px!important;bottom:13px!important;left:auto!important;z-index:5;padding:7px 10px;border-radius:999px;background:rgba(21,24,34,.62);color:#fff;font-size:9px!important;font-weight:800!important;backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.floating-chip{z-index:6!important;top:12px!important;right:12px!important;left:auto!important;bottom:auto!important}
+.mini-service{overflow:hidden;position:relative;background:#eef1f6}.mini-service .service-thumb{height:100%;min-height:70px}.mini-service .cat-name{display:none}
+.service-body{position:relative}
+.service-body:before{content:"";position:absolute;left:18px;right:18px;top:0;height:1px;background:linear-gradient(90deg,transparent,#ece7fb,transparent)}
+.price strong{letter-spacing:-.5px}.primary,.purple,.pink{position:relative;overflow:hidden;transition:transform .25s ease,box-shadow .25s ease}.primary:after,.purple:after,.pink:after{content:"";position:absolute;top:-50%;left:-40%;width:28%;height:200%;transform:rotate(22deg);background:rgba(255,255,255,.24);animation:buttonSweep 4.5s ease-in-out infinite}
+.primary:hover,.purple:hover,.pink:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(79,35,180,.22)}
+.banner{position:relative;isolation:isolate}.banner:before{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-70px;top:-95px;background:rgba(255,255,255,.11);z-index:-1;animation:photoOrb 6s infinite alternate}
+.trust{transition:transform .3s ease,box-shadow .3s ease}.trust:hover{transform:translateY(-3px);box-shadow:0 16px 35px rgba(35,28,80,.11)}
+.section-title{letter-spacing:-.2px}
+@keyframes photoShine{0%,48%{left:-55%;opacity:0}55%{opacity:1}75%,100%{left:125%;opacity:0}}
+@keyframes photoOrb{to{transform:translate(-12px,16px) scale(1.12)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(25,185,107,.5)}70%{box-shadow:0 0 0 8px rgba(25,185,107,0)}100%{box-shadow:0 0 0 0 rgba(25,185,107,0)}}
+@keyframes buttonSweep{0%,58%{left:-45%;opacity:0}65%{opacity:1}88%,100%{left:130%;opacity:0}}
+@media(min-width:700px){.categories{grid-template-columns:repeat(4,1fr)}.cat{min-height:155px}.service-thumb{height:112px}.photo-art.detail{height:300px}}
+@media(max-width:360px){.cat{min-height:145px}.service-thumb{height:102px}.cat-name b{font-size:11px}.cat-name small{display:none}}
+@media(prefers-reduced-motion:reduce){.service-photo,.photo-art img,.photo-art .photo-shine,.service-thumb:before,.primary:after,.purple:after,.pink:after{animation:none!important;transition:none!important}.cat:hover,.trust:hover,.primary:hover,.purple:hover,.pink:hover{transform:none}}
+
+
+.photo-fallback-layer{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#edf4ff,#f7edff);font-size:48px;z-index:0}.photo-fallback-layer span{filter:drop-shadow(0 10px 12px rgba(50,30,100,.18));animation:tinyFloat 2.8s ease-in-out infinite}
+.photo-art .service-photo{position:relative;z-index:1}.photo-art .photo-vignette,.photo-art .photo-shine,.photo-art .photo-badge{z-index:3}.photo-art.photo-fallback .service-photo{display:none}
+
+/* ===== ADVANCED UI / MOTION LAYER ===== */
+body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 60%,#dfe1ea 100%)}
+.app{isolation:isolate}
+.app:before,.app:after{content:"";position:fixed;pointer-events:none;z-index:0;border-radius:50%;filter:blur(42px);opacity:.22;animation:orbFloat 10s ease-in-out infinite alternate}
+.app:before{width:180px;height:180px;left:-90px;top:18%;background:#c43aff}.app:after{width:220px;height:220px;right:-120px;top:50%;background:#19bdf2;animation-delay:-4s}
+@keyframes orbFloat{to{transform:translate3d(25px,-35px,0) scale(1.15)}}
+.screen{position:relative;z-index:1;animation:pageIn .42s cubic-bezier(.2,.75,.25,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+.top-gradient{position:relative;overflow:hidden;background:linear-gradient(135deg,#f32e7a 0%,#c12bdc 42%,#634ce9 100%);box-shadow:0 10px 28px rgba(106,44,207,.18)}
+.top-gradient:before{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(255,255,255,.16);border-radius:50%;right:-105px;top:-150px;box-shadow:0 0 0 24px rgba(255,255,255,.035),0 0 0 52px rgba(255,255,255,.025);animation:spinSlow 18s linear infinite}
+.top-gradient:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:28px;bottom:-48px;background:rgba(255,255,255,.12);filter:blur(2px);animation:pulseGlow 3s ease-in-out infinite}
+@keyframes spinSlow{to{transform:rotate(360deg)}}@keyframes pulseGlow{50%{transform:scale(1.3);opacity:.2}}
+.home-head>*{position:relative;z-index:2}
+.icon-btn,.back{transition:transform .22s,background .22s;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.icon-btn:active,.back:active,.primary:active,.full:active,.tab:active,.choice:active{transform:scale(.94)}
+.search{transition:.25s;position:relative;overflow:hidden}.search:after{content:"";position:absolute;left:-40%;top:0;width:30%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);transform:skewX(-20deg);animation:shine 4s infinite}.search:focus-within{transform:translateY(-2px);box-shadow:0 12px 30px rgba(78,37,155,.18)}
+@keyframes shine{0%,65%{left:-40%}100%{left:130%}}
+.card{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}.card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(45,30,95,.12);border-color:#ded8f4}
+.categories{background:linear-gradient(180deg,#fff,#fbfbff)}
+.cat{position:relative;transition:transform .25s ease}.cat:hover{transform:translateY(-5px)}.cat:after{content:"";position:absolute;left:50%;bottom:-2px;width:0;height:3px;border-radius:10px;background:linear-gradient(90deg,#ef3b7d,#6d35df);transition:.25s}.cat:hover:after{width:32px;left:calc(50% - 16px)}
+.cat-icon{position:relative;overflow:hidden;box-shadow:inset 0 1px 0 #fff,0 6px 15px rgba(80,70,140,.07);transition:.3s}.cat-icon:before{content:"";position:absolute;width:25px;height:90px;background:rgba(255,255,255,.55);transform:rotate(30deg) translateX(-75px);animation:iconShine 5s infinite}.cat:hover .cat-icon{transform:rotate(-3deg) scale(1.07)}
+@keyframes iconShine{0%,70%{transform:rotate(30deg) translateX(-75px)}100%{transform:rotate(30deg) translateX(120px)}}
+.banner{position:relative;overflow:hidden}.banner:before{content:"";position:absolute;width:170px;height:170px;border-radius:50%;right:-45px;top:-75px;border:1px solid rgba(255,255,255,.2);box-shadow:0 0 0 16px rgba(255,255,255,.04),0 0 0 34px rgba(255,255,255,.03);animation:spinSlow 12s linear infinite}.banner .arrow{transition:.25s}.banner:hover .arrow{transform:translateX(4px) rotate(-8deg)}
+.service-visual{background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.9),rgba(214,235,252,.75) 42%,rgba(204,190,250,.75));overflow:hidden}.service-visual:before,.service-visual:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(99,70,200,.12);animation:orbit 7s linear infinite}.service-visual:before{width:200px;height:200px}.service-visual:after{width:130px;height:130px;animation-direction:reverse;animation-duration:5s}
+@keyframes orbit{to{transform:rotate(360deg)}}.service-visual .ac{position:relative;z-index:2;animation:heroFloat 3.5s ease-in-out infinite;filter:drop-shadow(0 16px 12px rgba(57,39,120,.16))}@keyframes heroFloat{50%{transform:translateY(-9px) rotate(2deg) scale(1.04)}}
+.service-body h2{letter-spacing:-.35px}.features .feature{transition:.25s;position:relative;overflow:hidden}.features .feature:hover{transform:translateY(-4px);background:#f4f1ff}.features .feature span{animation:tinyFloat 2.8s ease-in-out infinite}.features .feature:nth-child(2) span{animation-delay:-.6s}.features .feature:nth-child(3) span{animation-delay:-1.2s}.features .feature:nth-child(4) span{animation-delay:-1.8s}@keyframes tinyFloat{50%{transform:translateY(-3px)}}
+.primary,.purple,.pink{position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(72,37,160,.16);transition:transform .2s,box-shadow .2s}.primary:hover,.purple:hover,.pink:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(72,37,160,.22)}.primary:before,.purple:before,.pink:before{content:"";position:absolute;top:0;bottom:0;width:40px;left:-60px;background:rgba(255,255,255,.25);transform:skewX(-20deg);animation:buttonShine 4.5s infinite}.primary>*{position:relative}@keyframes buttonShine{0%,65%{left:-60px}100%{left:125%}}
+.price strong{animation:pricePulse 2.6s ease-in-out infinite}@keyframes pricePulse{50%{text-shadow:0 0 12px rgba(21,157,95,.25)}}
+.bottom-nav{box-shadow:0 -8px 28px rgba(50,36,100,.09)}.nav-item{position:relative;transition:.22s}.nav-item span{transition:.22s}.nav-item:hover span{transform:translateY(-3px) scale(1.08)}.nav-item.active span{animation:navPop .45s ease}@keyframes navPop{50%{transform:translateY(-4px) scale(1.15)}}
+.page-head{box-shadow:0 9px 25px rgba(65,37,140,.16)}
+.date-grid .choice,.time-grid .choice{transition:.22s;box-shadow:0 3px 8px rgba(30,30,70,.03)}.choice:hover{transform:translateY(-2px)}.choice.selected{box-shadow:0 8px 18px rgba(105,47,207,.2)}
+.status{animation:statusGlow 2.4s ease-in-out infinite}@keyframes statusGlow{50%{box-shadow:0 0 0 5px rgba(11,155,89,.05)}}
+.modal.open .sheet{animation:sheetUp .38s cubic-bezier(.18,.85,.24,1)}@keyframes sheetUp{from{transform:translateY(40px);opacity:.7}to{transform:none;opacity:1}}
+.splash{background:radial-gradient(circle at 25% 15%,#ff77a6 0,#ef3a7b 24%,#7a31dc 62%,#168fd7 100%);overflow:hidden}.splash:before,.splash:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.18);border-radius:50%;animation:splashOrbit 11s linear infinite}.splash:before{width:420px;height:420px;left:-170px;top:-130px;box-shadow:0 0 0 35px rgba(255,255,255,.035),0 0 0 70px rgba(255,255,255,.025)}.splash:after{width:360px;height:360px;right:-160px;bottom:-150px;animation-direction:reverse;animation-duration:9s}@keyframes splashOrbit{to{transform:rotate(360deg)}}.splash-inner{position:relative;z-index:2;animation:splashIn .9s cubic-bezier(.16,.9,.24,1)}@keyframes splashIn{from{opacity:0;transform:translateY(22px) scale(.9)}to{opacity:1;transform:none}}.gear{display:inline-block;animation:gearSpin 8s linear infinite,gearFloat 2.6s ease-in-out infinite}.splash h1{text-shadow:0 10px 35px rgba(0,0,0,.18)}@keyframes gearSpin{to{transform:rotate(360deg)}}@keyframes gearFloat{50%{translate:0 -6px}}.splash button{box-shadow:0 12px 30px rgba(30,0,70,.2);transition:.25s}.splash button:hover{transform:translateY(-3px) scale(1.02)}
+.toast{box-shadow:0 10px 30px rgba(0,0,0,.25)}
+/* floating particles */
+.particle{position:fixed;width:4px;height:4px;border-radius:50%;background:rgba(113,48,220,.22);pointer-events:none;z-index:0;animation:particleMove linear infinite}.particle:nth-child(1){left:9%;top:28%;animation-duration:9s}.particle:nth-child(2){left:83%;top:22%;animation-duration:12s}.particle:nth-child(3){left:73%;top:65%;animation-duration:10s}.particle:nth-child(4){left:20%;top:76%;animation-duration:13s}.particle:nth-child(5){left:48%;top:48%;animation-duration:11s}@keyframes particleMove{0%{transform:translateY(0) scale(.7);opacity:0}20%{opacity:1}50%{transform:translateY(-35px) scale(1.4)}80%{opacity:.5}100%{transform:translateY(10px) scale(.7);opacity:0}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition:none!important}}
+
+/* ===== PREMIUM SERVICE VISUAL SYSTEM ===== */
+.categories{grid-template-columns:repeat(2,1fr);gap:10px;padding:11px;background:linear-gradient(180deg,#ffffff,#f8f7ff)}
+.cat{min-height:145px;padding:8px;border-radius:20px;background:linear-gradient(145deg,#fff,#f7f7fc);border:1px solid #eeeef5;box-shadow:0 8px 22px rgba(50,40,100,.07);overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;text-align:left}
+.cat:before{content:"";position:absolute;inset:0;border-radius:20px;background:linear-gradient(115deg,rgba(255,255,255,.9),transparent 45%);pointer-events:none}
+.cat:hover{transform:translateY(-7px) scale(1.015);box-shadow:0 18px 38px rgba(74,44,140,.14)}
+.cat-name{padding:7px 5px 3px;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;line-height:1.2}
+.cat-name b{font-weight:850}.cat-name small{color:#8b8797;font-size:9px;font-weight:700}
+.service-thumb{height:92px;border-radius:15px;position:relative;overflow:hidden;background:linear-gradient(135deg,#eef9ff,#e9e2ff 60%,#fff1f6);border:1px solid rgba(120,90,200,.1);display:grid;place-items:center;isolation:isolate}
+.service-thumb:before{content:"";position:absolute;width:110px;height:110px;border:1px solid rgba(112,67,220,.14);border-radius:50%;animation:thumbOrbit 8s linear infinite}.service-thumb:after{content:"";position:absolute;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.48);filter:blur(2px);top:-18px;right:-8px;animation:blobMove 4s ease-in-out infinite alternate}
+@keyframes thumbOrbit{to{transform:rotate(360deg)}}@keyframes blobMove{to{transform:translate(-10px,15px) scale(1.2)}}
+.service-art{width:92%;height:92%;position:relative;z-index:2;animation:artFloat 3.8s ease-in-out infinite;filter:drop-shadow(0 10px 7px rgba(45,32,95,.14))}
+@keyframes artFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+.service-art .glow{animation:artGlow 2.6s ease-in-out infinite;transform-origin:center}@keyframes artGlow{50%{opacity:.5;transform:scale(1.06)}}
+.service-art .spin{transform-box:fill-box;transform-origin:center;animation:spinSlow 5s linear infinite}
+.service-art .blink{animation:blink 2.8s ease-in-out infinite}@keyframes blink{0%,88%,100%{opacity:1}92%{opacity:.15}}
+.service-art .pulse{animation:miniPulse 1.8s ease-in-out infinite}@keyframes miniPulse{50%{transform:scale(1.12);opacity:.8}}
+
+.service-visual{height:205px;background:radial-gradient(circle at 50% 50%,#fff 0,#e8f7ff 34%,#d8cdf8 72%,#f5d9e9 100%)}
+.service-visual .service-art{width:78%;height:78%;animation-duration:4.2s}
+.service-visual .visual-label{position:absolute;left:14px;bottom:12px;padding:7px 10px;border-radius:30px;background:rgba(255,255,255,.68);backdrop-filter:blur(10px);font-size:9px;font-weight:900;color:#5f35a9;border:1px solid rgba(255,255,255,.75);z-index:4}
+.service-visual .floating-chip{position:absolute;right:13px;top:12px;padding:7px 10px;border-radius:30px;background:rgba(255,255,255,.7);backdrop-filter:blur(10px);font-size:9px;font-weight:900;color:#159d5f;z-index:4;animation:chipFloat 2.5s ease-in-out infinite}
+@keyframes chipFloat{50%{transform:translateY(-5px)}}
+.mini-service{position:relative;overflow:hidden}.mini-service .service-art{width:86%;height:86%}
+
+.feature{transition:.25s;position:relative;overflow:hidden}.feature:hover{transform:translateY(-4px);background:#fff;box-shadow:0 10px 22px rgba(60,45,120,.1)}
+.price strong{animation:pricePulse 2.8s ease-in-out infinite}@keyframes pricePulse{50%{text-shadow:0 0 14px rgba(21,157,95,.25)}}
+.primary,.purple,.pink{position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(82,40,160,.14);transition:.25s}.primary:before,.purple:before,.pink:before{content:"";position:absolute;top:-30%;left:-45%;width:28%;height:160%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);animation:buttonShine 4s infinite}.primary:hover,.purple:hover,.pink:hover{transform:translateY(-2px);box-shadow:0 13px 26px rgba(82,40,160,.22)}
+@keyframes buttonShine{0%,65%{left:-45%}100%{left:145%}}
+.categories .cat:nth-child(2n) .service-thumb{background:linear-gradient(135deg,#fff5f8,#eee7ff,#e7f8ff)}
+.categories .cat:nth-child(3n) .service-thumb{background:linear-gradient(135deg,#effff7,#eaf5ff,#f5eaff)}
+.categories .cat:nth-child(4n) .service-thumb{background:linear-gradient(135deg,#fff8ea,#ffeef5,#eeeaff)}
+@media(min-width:700px){.categories{grid-template-columns:repeat(4,1fr)}.cat{min-height:142px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+
+/* =========================================================
+   DESKTOP EXPERIENCE — separate layout, same brand palette
+   Mobile layout above remains unchanged.
+   ========================================================= */
+@media (min-width: 900px){
+  html,body{background:radial-gradient(circle at 15% 10%,rgba(255,96,151,.13),transparent 28%),radial-gradient(circle at 90% 85%,rgba(103,65,232,.13),transparent 30%),#eef0f7}
+  body{padding:24px}
+  .app{width:100%;max-width:1500px;min-height:calc(100vh - 48px);margin:0 auto;border-radius:30px;overflow:hidden;box-shadow:0 25px 80px rgba(40,28,90,.15);background:var(--bg)}
+  .screen{min-height:calc(100vh - 48px);padding:0 34px 42px 252px;position:relative}
+  .home-head{margin:0 -34px 0 -252px;padding:32px 42px 30px 286px;border-radius:0 0 32px 32px;min-height:220px;box-shadow:0 15px 35px rgba(76,37,140,.12)}
+  .home-head .icon-btn{width:48px;height:48px}
+  .hello{font-size:16px;margin-top:22px}.hello strong{font-size:34px;line-height:1.08;margin-top:6px}
+  .search{max-width:760px;height:58px;border-radius:18px;margin-top:22px}.search button{width:46px;height:46px}
+  .content{padding:24px 0 0;max-width:1160px;margin:0 auto}
+  .categories{grid-template-columns:repeat(6,1fr);gap:14px;padding:18px;border-radius:24px}
+  .cat{font-size:12px;padding:6px;border-radius:17px;transition:.25s;background:#fff}
+  .cat:hover{background:#faf7ff;transform:translateY(-4px)}
+  .cat-icon{width:64px;height:64px}
+  .section-title{font-size:20px;margin:28px 4px 13px}
+  .banner{padding:22px;border-radius:20px}.banner h3{font-size:20px}.banner p{font-size:12px}
+  .popular-carousel{border-radius:24px}
+  .popular-slide{display:grid;grid-template-columns:1.1fr 1fr;min-height:430px}
+  .popular-slide .service-visual{height:auto;min-height:430px}
+  .popular-slide .service-body{display:flex;flex-direction:column;justify-content:center;padding:42px}
+  .popular-slide .service-body h2{font-size:32px}.popular-slide .service-body p{font-size:15px;max-width:500px}
+  .popular-slide .price-row{margin-top:25px}.popular-slide .primary{padding:15px 25px}
+  .service-card .service-visual{height:310px}.service-body{padding:26px}.service-body h2{font-size:28px}.service-body p{font-size:14px}
+  .features{gap:12px}.feature{padding:14px;font-size:11px}
+  .bottom-nav{position:fixed;left:calc((100vw - min(1500px, calc(100vw - 48px)))/2 + 24px);top:calc(24px + 24px);bottom:calc(24px + 24px);transform:none;width:196px;height:auto;border:1px solid #ece7f7;border-radius:26px;background:rgba(255,255,255,.93);box-shadow:0 20px 45px rgba(52,34,110,.11);display:flex;flex-direction:column;justify-content:flex-start;gap:8px;padding:18px 12px;z-index:30}
+  .bottom-nav:before{content:'SANGAM DIAL SERVICE';display:block;padding:10px 12px 22px;color:#6d35df;font-size:13px;font-weight:1000;letter-spacing:1px;line-height:1.25}
+  .nav-item{height:58px;border-radius:15px;font-size:12px;display:flex;flex-direction:row;justify-content:flex-start;padding:0 16px;gap:13px}
+  .nav-item span{font-size:23px;width:25px}.nav-item.active{background:linear-gradient(135deg,#f5eaff,#edf3ff);box-shadow:inset 3px 0 0 #7130dc}
+  .page-head{margin:0 -34px 0 -252px;padding:20px 42px 20px 286px;border-radius:0 0 24px 24px}
+  .page-head h2{font-size:22px}.back{width:44px;height:44px}
+  .booking{padding:0;max-width:1160px;margin:0 auto}.booking-card{padding:20px;border-radius:20px;transition:.22s}.booking-card:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(35,28,80,.12)}
+  .mini-service{width:90px;height:90px}
+  .form{max-width:900px;margin:0 auto;padding:25px 0}.date-grid,.time-grid{grid-template-columns:repeat(7,1fr)}
+  .sticky-action{margin-left:-34px;margin-right:-34px;padding:16px 34px}.sticky-action .full{max-width:900px;display:block;margin:auto}
+  .modal{align-items:center}.sheet{width:min(620px,calc(100vw - 80px));border-radius:28px;max-height:85vh;box-shadow:0 30px 90px rgba(20,12,50,.28)}
+  .profile-card{padding:25px}.profile-name{font-size:23px}.profile-address{font-size:11px}
+  .menu-row{padding:19px}.menu-row .mi{width:46px;height:46px}
+  .support-call-card{cursor:pointer}.support-call-card:hover{transform:translateY(-2px)}
+}
+@media (min-width: 900px) and (max-width: 1150px){
+  .screen{padding-left:224px;padding-right:24px}.home-head{margin-left:-224px;padding-left:258px}.page-head{margin-left:-224px;padding-left:258px}.content{max-width:1000px}.categories{grid-template-columns:repeat(5,1fr)}
+  .bottom-nav{width:174px}
+}
+
+
+/* =========================================================
+   STABLE NAVIGATION — hamburger drawer on all screen sizes
+   Desktop: no permanent left rail.
+   Mobile: existing bottom navigation remains unchanged.
+   ========================================================= */
+.home-controls{justify-content:flex-start}
+.compact-hello{font-size:14px!important;margin-top:18px!important}
+.compact-hello strong{display:none!important}
+.menu-trigger{position:relative;z-index:3}
+@media(min-width:900px){
+  .screen{padding-left:34px!important}
+  .home-head{margin-left:-34px!important;padding-left:42px!important}
+  .page-head{margin-left:-34px!important;padding-left:42px!important}
+  .content{max-width:1250px}
+  .bottom-nav{display:none!important}
+  .home-head{min-height:205px!important}
+  .compact-hello{font-size:16px!important;margin-top:20px!important}
+  .search{max-width:820px!important}
+  #modal.menu-modal{align-items:stretch!important;justify-content:flex-start!important;background:rgba(18,15,32,.38)!important}
+  #modal.menu-modal .sheet{height:100vh!important;max-height:none!important;width:330px!important;border-radius:0 28px 28px 0!important;margin:0!important;padding:26px 20px!important;box-shadow:25px 0 70px rgba(30,20,80,.22)!important;animation:drawerIn .28s cubic-bezier(.2,.8,.2,1)}
+  #modal.menu-modal .sheet-head{padding-bottom:10px}
+  #modal.menu-modal .menu-row{border-radius:16px;border:1px solid #f0edf7;margin:7px 0;background:#fff;box-shadow:0 5px 18px rgba(45,32,90,.05)}
+}
+@media(max-width:899px){
+  .compact-hello{margin-top:15px!important}
+}
+@keyframes drawerIn{from{transform:translateX(-100%);opacity:.7}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   SANGAM DIAL SERVICE
+   Storage layer is deliberately isolated so a real API/DB
+   can replace it later without rebuilding the UI.
+   ========================================================= */
+const STORAGE_KEY = "sangam_dial_service_v1";
+
+const SERVICES = [
+ {id:"ac",name:"AC",icon:"❄️",price:299,desc:"AC repair, installation, servicing and gas refilling.",details:["AC Repair & Troubleshooting","AC Installation (New)","AC Gas Refilling","AC Cleaning & Servicing","AC Uninstallation"]},
+ {id:"tv",name:"TV",icon:"📺",price:249,desc:"TV installation, repair and smart TV setup."},
+ {id:"computer",name:"Computer",icon:"🖥️",price:349,desc:"Computer repair, software setup and maintenance."},
+ {id:"cctv",name:"CCTV",icon:"📹",price:499,desc:"CCTV installation, repair and camera setup."},
+ {id:"ro",name:"RO",icon:"🚰",price:199,desc:"RO service, filter replacement and repair."},
+ {id:"plumbing",name:"Plumbing",icon:"🔧",price:199,desc:"Home plumbing repair and installation."},
+ {id:"laptop",name:"Laptop",icon:"💻",price:349,desc:"Laptop repair, OS setup and maintenance."},
+ {id:"electrician",name:"Electrician",icon:"🧑‍🔧",price:249,desc:"Electrical repair and appliance installation."},
+ {id:"fridge",name:"Fridge",icon:"🧊",price:299,desc:"Refrigerator repair and servicing."},
+ {id:"washing",name:"Washing Machine",icon:"🫧",price:299,desc:"Washing machine repair and installation."},
+ {id:"assembly",name:"New Computer Assembly",icon:"🖥️",price:499,desc:"PC assembly and component installation."},
+ {id:"window",name:"Window Formation",icon:"🪟",price:399,desc:"Window fitting and related home service."},
+ {id:"printer",name:"Print Service",icon:"🖨️",price:149,desc:"Printer setup, repair and service."}
+];
+
+const defaultState = {
+ version:1,
+ user:{name:"",phone:"",email:"",avatar:"U",profileComplete:false},
+ addresses:[],
+ bookings:[],
+ notifications:[],
+ support:[],
+ settings:{notifications:true},
+ meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}
+};
+
+function loadState(){
+ try{
+   const raw=localStorage.getItem(STORAGE_KEY);
+   if(!raw){localStorage.setItem(STORAGE_KEY,JSON.stringify(defaultState));return structuredClone(defaultState)}
+   const parsed=JSON.parse(raw);
+   return Object.assign(structuredClone(defaultState),parsed,{user:Object.assign({},defaultState.user,parsed.user||{})});
+ }catch(e){return structuredClone(defaultState)}
+}
+let DB=loadState();
+
+function saveState(){
+ DB.meta.updatedAt=new Date().toISOString();
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(DB));
+}
+const Store={
+ get(){return DB},
+ save(){saveState()},
+ reset(){DB=structuredClone(defaultState);saveState()},
+ export(){return JSON.stringify(DB,null,2)},
+ import(json){const x=JSON.parse(json);if(!x || typeof x!=="object")throw Error("Invalid data");DB=x;saveState()}
+};
+/* Future backend adapter:
+async function syncWithDatabase(){ return fetch('/api/...',{method:'POST',body:JSON.stringify(DB)}) }
+All user/order records currently live in localStorage.
+*/
+
+let route={page:"home",service:null};
+
+function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function money(n){return "₹"+Number(n||0).toLocaleString("en-IN")}
+function uid(prefix="SD"){return prefix+"-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase()}
+function service(id){return SERVICES.find(x=>x.id===id)||SERVICES[0]}
+function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove("show"),2400)}
+function initials(name){return (name||"U").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()}
+function go(page,svc=null){
+ route={page,service:svc};render();window.scrollTo({top:0,behavior:"smooth"});
+ if(page==="home"){setTimeout(()=>{renderPopular();startPopularSlider()},60)}
+ else clearInterval(popularTimer);
+}
+
+function header(title,back="home"){
+ return `<div class="top-gradient page-head"><button class="back" onclick="go('${back}')">‹</button><h2>${title}</h2><button class="icon-btn" onclick="openNotifications()">🔔</button></div>`;
+}
+function bottom(active){
+ return `<nav class="bottom-nav">
+  <button class="nav-item ${active==="home"?"active":""}" onclick="go('home')"><span>⌂</span>Home</button>
+  <button class="nav-item ${active==="bookings"?"active":""}" onclick="go('bookings')"><span>▣</span>Bookings</button>
+  <button class="nav-item ${active==="support"?"active":""}" onclick="go('support')"><span>◉</span>Support</button>
+  <button class="nav-item ${active==="profile"?"active":""}" onclick="go('profile')"><span>♙</span>Profile</button>
+ </nav>`;
+}
+
+const SERVICE_IMAGES={
+ ac:'https://ohserve.com/img/photos/image1.png',
+ tv:'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=1000&q=88',
+ computer:'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=1000&q=88',
+ cctv:'https://afocirmbqdxnkyescnev.supabase.co/storage/v1/object/public/featured-images/8d572ce1-1e8d-4be1-b07d-7eb8d602ba08/ac358c35-1625-4117-a53d-fc9062ca5743.webp',
+ ro:'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=1000&q=88',
+ plumbing:'https://www.mybusinessflow.com/_astro/residential-plumbing.Dd3v6iPu_FocJD.webp',
+ laptop:'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=88',
+ electrician:'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1000&q=88',
+ fridge:'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=1000&q=88',
+ washing:'https://fixajman.com/assets/services/washing-machine-repair.webp',
+ assembly:'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=1000&q=88',
+ window:'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1000&q=88',
+ printer:'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=1000&q=88'
+};
+function serviceArt(s, mini=false){
+ const url=SERVICE_IMAGES[s.id]||SERVICE_IMAGES.computer;
+ const cls=mini?'photo-art mini':'photo-art detail';
+ return `<div class="${cls}">
+   <img class="service-photo" src="${url}" alt="Professional ${esc(s.name)} service" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.parentElement.classList.add('photo-fallback');">
+   <div class="photo-fallback-layer"><span>${s.icon||'⚙️'}</span></div>
+   <div class="photo-vignette"></div><div class="photo-shine"></div>
+   
+ </div>`;
+}
+function home(){
+ const cats=SERVICES.map(s=>`<button class="cat" onclick="go('service','${s.id}')"><div class="service-thumb">${serviceArt(s,true)}</div><div class="cat-name"><b>${esc(s.name)}</b><small>VIEW →</small></div></button>`).join("");
+ const recent=DB.bookings.slice().reverse().slice(0,2);
+ return `<div class="screen">
+  <div class="top-gradient home-head">
+   <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button></div>
+   <div class="hello compact-hello">Hello, ${esc(DB.user.name||"User")} 👋</div>
+   <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
+  </div>
+  <div class="content">
+   <div class="card categories" id="categories">${cats}</div>
+   <div class="section-title">Quality Service</div>
+   <div class="card banner" onclick="go('service','ac')"><div><h3>You Can Trust</h3><p>Certified Technicians • Quick Support</p></div><div class="arrow">›</div></div>
+   <div class="section-title">Smart Service Network</div>
+   <div class="card" style="padding:13px;display:grid;grid-template-columns:1fr 1fr;gap:9px;background:linear-gradient(135deg,#fff,#f7f2ff)">
+    <div style="padding:12px;border-radius:16px;background:#f1fff8;border:1px solid #dcf7e9"><div style="font-size:20px">🟢</div><b style="font-size:12px">Live Availability</b><div style="font-size:9px;color:#777;margin-top:3px">Experts available near you</div></div>
+    <div style="padding:12px;border-radius:16px;background:#f2f7ff;border:1px solid #dceaff"><div style="font-size:20px">⚡</div><b style="font-size:12px">Quick Response</b><div style="font-size:9px;color:#777;margin-top:3px">Fast booking confirmation</div></div>
+   </div>
+   <div class="section-title popular-heading"><span>Popular Service</span><div class="carousel-dots" id="popularDots"></div></div>
+   <div class="card service-card popular-carousel" id="popularCarousel">
+    ${popularSlides()}
+   </div>
+   ${recent.length?`<div class="section-title">Recent Bookings</div>${recent.map(bookingMini).join("")}`:""}
+   <div class="section-title">Live Service Network</div>
+   <div class="card" style="padding:13px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;background:linear-gradient(135deg,#fff,#f6f2ff)">
+    <div style="text-align:center"><div style="font-size:20px;animation:tinyFloat 2s infinite">⚡</div><b style="font-size:13px">Fast</b><div style="font-size:9px;color:#888">Response</div></div>
+    <div style="text-align:center;border-left:1px solid #eee;border-right:1px solid #eee"><div style="font-size:20px;animation:tinyFloat 2s -.7s infinite">🛡️</div><b style="font-size:13px">Verified</b><div style="font-size:9px;color:#888">Technicians</div></div>
+    <div style="text-align:center"><div style="font-size:20px;animation:tinyFloat 2s -1.3s infinite">📍</div><b style="font-size:13px">Doorstep</b><div style="font-size:9px;color:#888">Service</div></div>
+   </div>
+   <div class="section-title">Why Sangam?</div>
+   <div class="card trust"><div class="trust-icon">🛡️</div><div><h4>Trusted Service At Your Doorstep</h4><p>Professional technicians • Price confirmed on contact • Service support</p></div></div>
+  </div>${bottom("home")}
+ </div>`;
+}
+function bookingMini(b){
+ const s=service(b.serviceId);
+ return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status">${esc(b.status)}</span></div></div></div>`;
+}
+function servicePage(id){
+ const s=service(id);
+ const details=(s.details||["Service & Troubleshooting","Installation / Replacement","Cleaning & Maintenance","Doorstep Expert Visit","Service Warranty"]).map(x=>`<div class="check"><i>●</i>${esc(x)}</div>`).join("");
+ return `<div class="screen">
+  ${header(s.name+" Service")}
+  <div class="content">
+   <div class="card service-card">
+    <div class="service-visual">${serviceArt(s)}<span class="visual-label">Premium doorstep care</span></div>
+    <div class="service-body"><h2>${esc(s.name)} Repair & Installation</h2><p>${esc(s.desc)}</p>
+      <div class="list-box"><div class="list-title">Our Services</div>${details}</div>
+      <div class="features">
+       <div class="feature"><span>👨‍🔧</span>Expert<br>Technicians</div><div class="feature"><span>💰</span>Affordable<br>Pricing</div><div class="feature"><span>🚚</span>Doorstep<br>Service</div><div class="feature"><span>🛡️</span>Service<br>Warranty</div>
+      </div>
+      <div class="price-row"><div class="price contact-price"><small>Service Price</small><strong>Contact Us</strong><em>Price confirmed after contact</em></div><button class="primary" onclick="go('book', '${s.id}')">Book Now&nbsp; →</button></div>
+    </div>
+   </div>
+  </div>
+ </div>`;
+}
+function bookPage(id){
+ const s=service(id);
+ const now=new Date(); let dates=[];
+ for(let i=0;i<7;i++){let d=new Date(now);d.setDate(now.getDate()+i);dates.push(d)}
+ const dateButtons=dates.map((d,i)=>`<button class="choice ${i===0?"selected":""}" data-date="${d.toISOString().slice(0,10)}" onclick="selectChoice(this,'date')">${i===0?"Today":d.toLocaleDateString("en-IN",{weekday:"short"})}<br><b>${d.getDate()}</b><br>${d.toLocaleDateString("en-IN",{month:"short"})}</button>`).join("");
+ const times=["10:00 AM","12:00 PM","02:00 PM","04:00 PM"];
+ return `<div class="screen">
+  ${header("Book Service")}
+  <div class="form">
+   <div class="card service-body" style="margin-bottom:12px"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div><h2 style="font-size:17px;margin:0 0 5px">${esc(s.name)} Repair & Installation</h2><p style="margin:0;color:#777;font-size:11px">Professional doorstep service</p><strong style="color:#7a2edb">Contact us for service price</strong></div></div></div>
+   <div class="section-title" style="margin-left:0">Select Date & Time</div>
+   <div class="date-grid" id="dateGrid">${dateButtons}</div>
+   <div class="time-grid" id="timeGrid" style="margin-top:9px">${times.map((t,i)=>`<button class="choice ${i===0?"selected":""}" data-time="${t}" onclick="selectChoice(this,'time')">${t}</button>`).join("")}</div>
+   <div class="section-title" style="margin-left:0">Location</div>
+   <div class="card location-card" style="padding:14px">
+      <div class="location-main" onclick="chooseAddress()"><div class="location-pin">⌖</div><div style="flex:1"><b>${esc(DB.addresses[0]?.label||"Home")}</b><div style="font-size:11px;color:#777;margin-top:3px" id="addressText">${esc(DB.addresses[0]?.address||"Add your address")}</div></div><b>›</b></div>
+      <button class="current-location-btn" onclick="useCurrentLocation(event)">◎ Use Current Location</button>
+      <div id="locationMapHint" class="map-hint">${DB.addresses[0]?.lat ? 'Current location saved • Open in Google Maps' : 'Use GPS to automatically add your current location'}</div>
+    </div>
+   <div class="section-title" style="margin-left:0">Customer Details</div>
+   <div class="field"><label>Name</label><input id="custName" value="${esc(DB.user.name)}" placeholder="Your full name"></div>
+   <div class="field"><label>Phone</label><input id="custPhone" value="${esc(DB.user.phone)}" inputmode="tel" placeholder="10 digit mobile number"></div>
+   <div class="field"><label>Add Note (Optional)</label><textarea id="note" maxlength="120" placeholder="Describe your issue..."></textarea></div>
+   <div class="card summary"><div class="contact-pricing-note"><div class="cp-icon">₹</div><div><b>Price will be confirmed on contact</b><span>Final service price depends on the issue and required work. Our team will confirm it with you.</span></div></div></div>
+  </div>
+  <div class="sticky-action"><button class="full purple" onclick="confirmBooking('${s.id}')">Confirm Booking &nbsp; →</button><div style="text-align:center;font-size:10px;color:#777;margin-top:8px">🔒 Secure Booking • Price confirmed on contact</div></div>
+ </div>`;
+}
+function bookingsPage(){
+ const bs=DB.bookings.slice().reverse();
+ return `<div class="screen">${header("My Bookings")}
+  <div class="tabs"><button class="tab active">All</button><button class="tab">Upcoming</button><button class="tab">Completed</button></div>
+  <div class="booking">${bs.length?bs.map(b=>`<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString("en-IN")}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join(""):`<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
+  ${bottom("bookings")}</div>`;
+}
+function profilePage(){
+ return `<div class="screen">${header("Profile")}
+ <div class="content">
+  <div class="card profile-card"><div class="row" style="justify-content:flex-start"><div class="avatar">${esc(initials(DB.user.name))}</div><div><div class="profile-name">${esc(DB.user.name||"User")}</div><div class="profile-phone">${esc(DB.user.phone||"Add mobile number")}</div><div class="profile-address">${esc(DB.addresses[0]?.address||"Add your address")}</div><div style="font-size:10px;color:#777;margin-top:4px">${DB.bookings.length} total booking(s)</div></div></div></div>
+  <div class="card menu-card">
+   <button class="menu-row" onclick="editProfile()"><div class="mi">👤</div><div><b>Personal Details</b><small>Update name, phone and email</small></div><b style="margin-left:auto">›</b></button>
+   <button class="menu-row" onclick="chooseAddress()"><div class="mi">⌖</div><div><b>My Addresses</b><small>${DB.addresses.length} saved address(es)</small></div><b style="margin-left:auto">›</b></button>
+   <button class="menu-row" onclick="openDataManager()"><div class="mi">💾</div><div><b>My Data</b><small>Export / import / backup local records</small></div><b style="margin-left:auto">›</b></button>
+   <button class="menu-row" onclick="clearAllData()"><div class="mi">♻️</div><div><b>Reset App Data</b><small>Delete local records from this browser</small></div><b style="margin-left:auto">›</b></button>
+  </div>
+  <div style="text-align:center;color:#999;font-size:10px;margin:18px">Sangam Dial Service • Local-first edition<br>Data is stored in this browser's Local Storage.</div>
+ </div>${bottom("profile")}</div>`;
+}
+function supportPage(){
+ return `<div class="screen">${header("Support")}
+ <div class="content">
+  <button class="card banner support-call-card" style="margin-bottom:12px;width:100%;text-align:left" onclick="callSupport()"><div><h3>Need Help?</h3><p>Tap here to call our support team directly.</p></div><div class="arrow">☎</div></button>
+  <div class="card" style="padding:16px;margin-bottom:12px"><h3 style="margin:0 0 5px">Send a Report</h3><p style="color:#777;font-size:11px">Your report is saved locally and prepared directly for our WhatsApp support number.</p>
+   <div class="field"><label>Subject</label><input id="supportSubject" placeholder="e.g. Booking issue"></div>
+   <div class="field"><label>Report / Message</label><textarea id="supportMessage" placeholder="Tell us what happened..."></textarea></div>
+   <button class="full purple" onclick="sendSupport()">Send Report on WhatsApp&nbsp; →</button>
+  </div>
+  ${DB.support.slice().reverse().map(x=>`<div class="card" style="padding:14px;margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(x.subject)}</b><span class="status">${esc(x.status||"Open")}</span></div><div style="font-size:11px;color:#777;margin-top:5px">${esc(x.message)}</div><div style="font-size:9px;color:#aaa;margin-top:9px">${new Date(x.createdAt).toLocaleString("en-IN")}</div></div>`).join("")}
+ </div>${bottom("support")}</div>`;
+}
+
+function render(){
+ const app=document.getElementById("app");
+ let out="";
+ if(route.page==="home")out=home();
+ else if(route.page==="service")out=servicePage(route.service);
+ else if(route.page==="book")out=bookPage(route.service);
+ else if(route.page==="bookings")out=bookingsPage();
+ else if(route.page==="profile")out=profilePage();
+ else if(route.page==="support")out=supportPage();
+ app.innerHTML=out;
+}
+function selectChoice(btn,type){
+ document.querySelectorAll(type==="date"?"#dateGrid .choice":"#timeGrid .choice").forEach(x=>x.classList.remove("selected"));
+ btn.classList.add("selected");
+}
+function getSelected(type){
+ const el=document.querySelector((type==="date"?"#dateGrid":"#timeGrid")+" .choice.selected");
+ return type==="date"?el?.dataset.date:el?.dataset.time;
+}
+function confirmBooking(serviceId){
+ const name=document.getElementById("custName").value.trim(), phone=document.getElementById("custPhone").value.trim();
+ const address=DB.addresses[0]?.address||"";
+ if(needsOnboarding()){toast("Please complete your profile first");showOnboarding();return}
+ if(!name){toast("Please enter your name");return}
+ if(!/^[0-9+ -]{10,15}$/.test(phone)){toast("Please enter a valid phone number");return}
+ if(!address){toast("Please add your address");return}
+ const s=service(serviceId);
+ const booking={id:uid("SDS"),serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt:new Date().toISOString()};
+ DB.user.name=name;DB.user.phone=phone;DB.user.profileComplete=true;DB.bookings.push(booking);
+ DB.notifications.push({id:uid("N"),title:"Booking Confirmed",text:`${s.name} service booked for ${booking.date} at ${booking.time}.`,createdAt:new Date().toISOString(),read:false});
+ saveState();
+ openBookingSuccess(booking);
+}
+function openBookingSuccess(b){
+ document.getElementById("sheet").innerHTML=`<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
+ <div class="booking-actions">${contactButtons(b)}</div>
+ <div class="order-share-note">WhatsApp/SMS opens with a ready-to-send order message. Your browser will ask for confirmation before sending.</div>
+ <button class="full purple" style="margin-top:12px" onclick="closeModal();go('bookings')">View My Booking</button></div>`;
+ document.getElementById("modal").classList.add("open");
+}
+
+const BUSINESS_WHATSAPP="919219951830";
+const BUSINESS_PHONE="9219951830";
+
+function orderMessage(b){
+ const s=service(b.serviceId);
+ return `SANGAM DIAL SERVICE
+Order No: ${b.id}
+Order Type: ${s.name} Service
+Customer Name: ${b.name}
+Customer Phone: ${b.phone}
+Date: ${b.date}
+Time: ${b.time}
+Address: ${b.address}
+Issue / Note: ${b.note||"Not provided"}
+Price: To be confirmed on contact
+Status: ${b.status}
+
+Please contact me regarding this service booking.`;
+}
+function contactButtons(b){
+ const msg=encodeURIComponent(orderMessage(b));
+ const wa=`https://wa.me/${BUSINESS_WHATSAPP}?text=${msg}`;
+ const sms=`sms:${BUSINESS_PHONE}?body=${msg}`;
+ return `<a class="contact-action call-action" href="tel:${BUSINESS_PHONE}">☎ Call</a>
+ <a class="contact-action sms-action" href="${sms}">✉ Text</a>
+ <a class="contact-action wa-action" target="_blank" rel="noopener" href="${wa}">◉ WhatsApp</a>`;
+}
+function useCurrentLocation(event){
+ if(event) event.stopPropagation();
+ const hint=document.getElementById("locationMapHint");
+ if(!navigator.geolocation){toast("GPS is not supported by this browser");return}
+ if(hint) hint.textContent="Requesting your current location…";
+ navigator.geolocation.getCurrentPosition(pos=>{
+   const lat=pos.coords.latitude, lng=pos.coords.longitude;
+   const mapUrl=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+   const address=`GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+   DB.addresses=[{id:"current",label:"Current Location",address,lat,lng,mapUrl}]; DB.user.profileComplete=!!(DB.user.name?.trim() && DB.user.phone?.trim());
+   saveState();
+   if(hint) hint.innerHTML=`Location saved • <a href="${mapUrl}" target="_blank" rel="noopener" style="color:#6532ce;font-weight:800">Open Google Maps</a>`;
+   const at=document.getElementById("addressText"); if(at) at.textContent=address;
+   toast("Current location added");
+ },()=>{
+   if(hint) hint.textContent="Location permission was not granted. Please allow GPS access.";
+   toast("Could not access current location");
+ },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+function openGoogleMap(){
+ const a=DB.addresses[0];
+ if(a?.mapUrl){window.open(a.mapUrl,"_blank","noopener");return}
+ if(a?.address){window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address)}`,"_blank","noopener");return}
+ toast("Please add a location first");
+}
+
+function openBooking(id){
+ const b=DB.bookings.find(x=>x.id===id);if(!b)return;
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Booking Details</h3><button class="close" onclick="closeModal()">×</button></div>${bookingMini(b)}
+ <div class="card" style="padding:13px">
+  <div class="summary-line"><span>Order No.</span><b>${esc(b.id)}</b></div>
+  <div class="summary-line"><span>Order Type</span><b>${esc(service(b.serviceId).name)} Service</b></div>
+  <div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div>
+  <div class="summary-line"><span>Phone</span><b>${esc(b.phone)}</b></div>
+  <div class="summary-line"><span>Date</span><b>${esc(b.date)}</b></div>
+  <div class="summary-line"><span>Time</span><b>${esc(b.time)}</b></div>
+  <div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div>
+  <div class="summary-line"><span>Note</span><b style="max-width:220px;text-align:right">${esc(b.note||"—")}</b></div>
+  <div class="summary-line"><span>Price</span><b>Contact to confirm</b></div>
+ </div>
+ <div class="booking-actions">${contactButtons(b)}</div>
+ <div class="order-share-note">Order details are automatically formatted for Call, Text and WhatsApp.</div>`;
+ document.getElementById("modal").classList.add("open");
+}
+function closeModal(){document.getElementById("modal").classList.remove("open","menu-modal")}
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+function openNotifications(){
+ const ns=DB.notifications.slice().reverse();
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${ns.length?ns.map(n=>`<div class="card" style="padding:13px;margin-bottom:9px"><b>${esc(n.title)}</b><div style="font-size:11px;color:#777;margin-top:4px">${esc(n.text)}</div><div style="font-size:9px;color:#aaa;margin-top:7px">${new Date(n.createdAt).toLocaleString("en-IN")}</div></div>`).join(""):`<div class="empty"><div class="big">🔔</div><p>No notifications yet.</p></div>`}`;
+ document.getElementById("modal").classList.add("open");
+ DB.notifications.forEach(n=>n.read=true);saveState();
+}
+function openMenu(){
+ const modal=document.getElementById("modal");
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Sangam Dial Service</h3><button class="close" onclick="closeModal()">×</button></div>
+ <button class="menu-row" onclick="closeModal();go('home')"><div class="mi">⌂</div><div><b>Home</b><small>Browse all services</small></div></button>
+ <button class="menu-row" onclick="closeModal();go('bookings')"><div class="mi">▣</div><div><b>My Bookings</b><small>Track all orders</small></div></button>
+ <button class="menu-row" onclick="closeModal();go('support')"><div class="mi">◉</div><div><b>Support</b><small>Contact support</small></div></button>
+ <button class="menu-row" onclick="closeModal();go('profile')"><div class="mi">👤</div><div><b>Profile</b><small>Personal details & addresses</small></div></button>`;
+ modal.classList.add("open","menu-modal");
+}
+function editProfile(){
+ const a=DB.addresses[0]?.address||"";
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Personal Details</h3><button class="close" onclick="closeModal()">×</button></div>
+ <div class="field"><label>Name</label><input id="pName" value="${esc(DB.user.name)}"></div>
+ <div class="field"><label>Phone</label><input id="pPhone" value="${esc(DB.user.phone)}" inputmode="tel"></div>
+ <div class="field"><label>Email</label><input id="pEmail" value="${esc(DB.user.email)}" type="email"></div>
+ <div class="field"><label>Address</label><textarea id="pAddress" placeholder="House / Street / Area / City / PIN">${esc(a)}</textarea></div>
+ <button class="full purple" onclick="saveProfile()">Save Details</button>`;
+ document.getElementById("modal").classList.add("open");
+}
+function saveProfile(){
+ const name=document.getElementById("pName").value.trim()||"User";
+ const phone=document.getElementById("pPhone").value.trim();
+ const email=document.getElementById("pEmail").value.trim();
+ const address=document.getElementById("pAddress").value.trim();
+ if(!/^[0-9+ -]{10,15}$/.test(phone)){toast("Please enter a valid mobile number");return}
+ if(!address){toast("Please enter your address");return}
+ DB.user.name=name;DB.user.phone=phone;DB.user.email=email;DB.user.avatar=initials(name);DB.user.profileComplete=true;
+ DB.addresses=[{id:"home",label:"Home",address}];
+ saveState();closeModal();render();toast("Profile saved locally");
+}
+function chooseAddress(){
+ const a=DB.addresses[0]||{label:"Home",address:""};
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>My Addresses</h3><button class="close" onclick="closeModal()">×</button></div>
+ <div class="card" style="padding:14px;margin-bottom:12px"><b>${esc(a.label||"Home")}</b><div style="font-size:11px;color:#777;margin:5px 0 10px">${esc(a.address||"No address")}</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button class="purple" style="padding:9px 8px;border-radius:10px" onclick="editAddress()">Edit Address</button><button class="current-location-btn" style="margin:0" onclick="useCurrentLocation()">◎ Current GPS</button></div>
+ ${a.mapUrl?`<button class="full" style="height:42px;margin-top:8px;background:#eef6ff;color:#2877d1" onclick="openGoogleMap()">⌖ Open in Google Maps</button>`:""}</div>
+ <button class="full" style="background:#eee;color:#333" onclick="editAddress(true)">+ Add / Replace Address</button>`;
+ document.getElementById("modal").classList.add("open");
+}
+function editAddress(){
+ const a=DB.addresses[0]||{label:"Home",address:""};
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Save Address</h3><button class="close" onclick="closeModal()">×</button></div>
+ <div class="field"><label>Label</label><input id="aLabel" value="${esc(a.label||"Home")}"></div>
+ <div class="field"><label>Full Address</label><textarea id="aAddress" placeholder="House / Street / Area / City / PIN">${esc(a.address||"")}</textarea></div>
+ <button class="full purple" onclick="saveAddress()">Save Address</button>`;
+}
+function saveAddress(){
+ const label=document.getElementById("aLabel").value.trim()||"Home",address=document.getElementById("aAddress").value.trim();
+ if(!address){toast("Please enter address");return}
+ const old=DB.addresses[0]||{};
+ DB.addresses=[{id:"home",label,address,lat:old.lat,lng:old.lng,mapUrl:old.mapUrl}];
+ DB.user.profileComplete=!!(DB.user.name?.trim() && DB.user.phone?.trim());
+ saveState();closeModal();render();toast("Address saved");
+}
+function openDataManager(){
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>My Data</h3><button class="close" onclick="closeModal()">×</button></div>
+ <div class="notice">Your profile, addresses, bookings, notifications and support requests are stored in <b>localStorage</b>. They remain available after closing/reopening the site, until browser/site data is cleared.</div>
+ <button class="full purple" onclick="downloadBackup()">⬇ Export Complete Backup</button>
+ <div style="height:9px"></div>
+ <label class="full" style="display:grid;place-items:center;background:#eee;color:#333">⬆ Import Backup<input type="file" accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])"></label>
+ <div style="font-size:10px;color:#999;text-align:center;margin-top:14px">This storage layer is DB-ready: replace Store with API calls later without changing the booking UI.</div>`;
+ document.getElementById("modal").classList.add("open");
+}
+function downloadBackup(){
+ const blob=new Blob([Store.export()],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="sangam-dial-service-backup.json";a.click();URL.revokeObjectURL(url);toast("Backup exported");
+}
+function importBackup(file){
+ if(!file)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);closeModal();render();toast("Backup imported successfully")}catch(e){toast("Invalid backup file")}};r.readAsText(file);
+}
+function clearAllData(){
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Reset Local Data?</h3><button class="close" onclick="closeModal()">×</button></div><p style="font-size:12px;color:#666">This will delete bookings, profile data, addresses, notifications and support requests from this browser.</p><button class="full pink" onclick="Store.reset();closeModal();render();toast('All local data reset')">Yes, Reset Everything</button>`;
+ document.getElementById("modal").classList.add("open");
+}
+function callSupport(){
+ window.location.href=`tel:${BUSINESS_PHONE}`;
+}
+function supportMessageText(x){
+ return `SANGAM DIAL SERVICE — SUPPORT REPORT\nReport No: ${x.id}\nCustomer Name: ${DB.user.name||"Not provided"}\nCustomer Phone: ${DB.user.phone||"Not provided"}\nSubject: ${x.subject}\nReport: ${x.message}\nDate: ${new Date(x.createdAt).toLocaleString("en-IN")}\n\nPlease assist with this report.`;
+}
+function sendSupport(){
+ const subject=document.getElementById("supportSubject").value.trim(),message=document.getElementById("supportMessage").value.trim();
+ if(!subject||!message){toast("Please fill subject and message");return}
+ const report={id:uid("SUP"),subject,message,createdAt:new Date().toISOString(),status:"Open"};
+ DB.support.push(report);saveState();
+ const wa=`https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(supportMessageText(report))}`;
+ window.open(wa,"_blank","noopener");
+ toast("Report saved and WhatsApp opened");
+}
+function searchServices(q){
+ q=q.toLowerCase().trim();
+ const list=SERVICES.filter(s=>!q||s.name.toLowerCase().includes(q)||s.desc.toLowerCase().includes(q));
+ document.getElementById("categories").innerHTML=list.length?list.map(s=>`<button class="cat" onclick="go('service','${s.id}')"><div class="service-thumb">${serviceArt(s,true)}</div><div class="cat-name"><b>${esc(s.name)}</b><small>VIEW →</small></div></button>`).join(""):`<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888;font-size:12px">No matching service found.</div>`;
+}
+
+const POPULAR_SERVICES=["ac","tv","cctv","plumbing","washing","electrician"];
+let popularIndex=0;
+let popularTimer=null;
+
+function popularSlides(){
+ const ids=POPULAR_SERVICES;
+ const current=ids[popularIndex%ids.length];
+ const s=service(current);
+ return `<div class="popular-slide">
+   <div class="service-visual">${serviceArt(s)}<span class="visual-label">Professional doorstep service</span></div>
+   <div class="service-body">
+    <div class="popular-kicker">POPULAR • ${String((popularIndex%ids.length)+1).padStart(2,"0")}</div>
+    <h2>${esc(s.name)} Service</h2>
+    <p>${esc(s.desc)} Our team can visit your doorstep after booking.</p>
+    <div class="price-row">
+      <div class="price contact-price"><small>Service Pricing</small><strong>Contact for price</strong><em>Price confirmed after contact</em></div>
+      <button class="primary" onclick="go('service','${s.id}')">Book Now&nbsp; →</button>
+    </div>
+   </div>
+ </div>`;
+}
+function renderPopular(){
+ const el=document.getElementById("popularCarousel");
+ if(el) el.innerHTML=popularSlides();
+ const dots=document.getElementById("popularDots");
+ if(dots) dots.innerHTML=POPULAR_SERVICES.map((_,i)=>`<i class="${i===popularIndex%POPULAR_SERVICES.length?"active":""}"></i>`).join("");
+}
+function startPopularSlider(){
+ clearInterval(popularTimer);
+ popularTimer=setInterval(()=>{
+   popularIndex=(popularIndex+1)%POPULAR_SERVICES.length;
+   const el=document.getElementById("popularCarousel");
+   if(!el)return;
+   el.classList.add("slide-out");
+   setTimeout(()=>{
+     renderPopular();
+     el.classList.remove("slide-out");
+     el.classList.add("slide-in");
+     setTimeout(()=>el.classList.remove("slide-in"),420);
+   },230);
+ },4300);
+}
+function showOnboarding(){
+ const m=document.getElementById("modal"), sheet=document.getElementById("sheet");
+ if(!m||!sheet)return;
+ const u=DB.user||{};
+ sheet.innerHTML=`<div class="onboard">
+   <div class="onboard-brand"><div class="onboard-logo">S</div><div><b>SANGAM</b><small>DIAL SERVICE</small></div></div>
+   <div class="onboard-icon">👋</div>
+   <h2>Welcome to Sangam</h2>
+   <p class="onboard-sub">Tell us a few details once. We'll save them securely in this browser and automatically fill them whenever you book a service.</p>
+   <div class="field"><label>Full Name <span>*</span></label><input id="loginName" value="${esc(u.name||"")}" placeholder="Enter your full name" autocomplete="name"></div>
+   <div class="field"><label>Mobile Number <span>*</span></label><input id="loginPhone" value="${esc(u.phone||"")}" inputmode="tel" maxlength="15" placeholder="10 digit mobile number" autocomplete="tel"></div>
+   <div class="field"><label>Address <span>*</span></label><textarea id="loginAddress" placeholder="House / Street / Area / City / PIN">${esc(u.address||DB.addresses[0]?.address||"")}</textarea></div>
+   <div class="field"><label>Email <small>(Optional)</small></label><input id="loginEmail" value="${esc(u.email||"")}" type="email" placeholder="you@example.com" autocomplete="email"></div>
+   <button class="full purple onboard-btn" onclick="completeOnboarding()">Continue to Sangam&nbsp; →</button>
+   <div class="onboard-note">🔒 Your profile and bookings are stored locally on this device.</div>
+ </div>`;
+ m.classList.add("open"); m.classList.remove("menu-modal");
+ document.body.classList.add("onboarding-open");
+}
+function completeOnboarding(){
+ const name=document.getElementById("loginName")?.value.trim();
+ const phone=document.getElementById("loginPhone")?.value.trim().replace(/\s+/g," ");
+ const address=document.getElementById("loginAddress")?.value.trim();
+ const email=document.getElementById("loginEmail")?.value.trim();
+ if(!name){toast("Please enter your name");return}
+ if(!/^[0-9+ -]{10,15}$/.test(phone)){toast("Please enter a valid mobile number");return}
+ if(!address){toast("Please enter your address");return}
+ DB.user={...DB.user,name,phone,email,avatar:initials(name),profileComplete:true};
+ DB.addresses=[{id:"home",label:"Home",address}];
+ saveState();
+ closeModal();
+ document.body.classList.remove("onboarding-open");
+ render();
+ setTimeout(startPopularSlider,80);
+ toast("Profile saved successfully");
+}
+function needsOnboarding(){
+ return !(DB.user?.profileComplete && DB.user.name?.trim() && DB.user.phone?.trim() && DB.addresses?.[0]?.address?.trim());
+}
+
+function startApp(){
+ render();
+ setTimeout(()=>{
+   document.querySelector(".splash")?.classList.add("hide");
+   if(needsOnboarding()) showOnboarding();
+   startPopularSlider();
+ },900);
+}
+document.addEventListener("DOMContentLoaded",()=>{
+ document.body.insertAdjacentHTML("afterbegin",`<div class="splash"><div class="splash-inner"><div class="gear">⚙️</div><h1>SANGAM</h1><h2>DIAL SERVICE</h2><p>One Call, All Solutions</p><button onclick="document.querySelector('.splash').classList.add('hide')">Get Started&nbsp; →</button></div></div>`);
+ startApp();
+});
+
+
+/* ===== ADVANCED MOTION HOOKS ===== */
+(function(){
+  const addParticles=()=>{if(document.querySelector('.particle'))return;for(let i=0;i<5;i++){const p=document.createElement('i');p.className='particle';document.body.appendChild(p)}};
+  const oldRender=window.render;
+  if(typeof oldRender==='function'){
+    window.render=function(){oldRender();requestAnimationFrame(()=>{addParticles();document.querySelectorAll('.card,.cat,.feature').forEach((el,i)=>{el.style.animationDelay=(Math.min(i,8)*35)+'ms'})})};
+  }
+  addParticles();
+  document.addEventListener('mousemove',e=>{
+    if(window.innerWidth<700)return;
+    const target=e.target.closest('.service-card,.banner,.profile-card'); if(!target)return;
+    const r=target.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    target.style.transform=`perspective(800px) rotateX(${(-y*2.2).toFixed(2)}deg) rotateY(${(x*2.2).toFixed(2)}deg) translateY(-3px)`;
+    target.addEventListener('mouseleave',()=>target.style.transform='',{once:true});
+  });
+})();
+
+</script>
+</body>
+</html>
