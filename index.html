@@ -80,11 +80,11 @@ button{cursor:pointer;border:0}
 @keyframes popularIn{from{opacity:0;transform:translateX(28px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes popularOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.985)}}
 .profile-address{font-size:9px;color:#888;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
- .service-availability{position:absolute;top:18px;right:18px;z-index:4;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.94);color:#138b58;font-size:10px;font-weight:900;box-shadow:0 8px 20px rgba(20,20,50,.12);backdrop-filter:blur(10px)}
+ .service-availability{position:absolute;top:14px;right:12px;z-index:8;padding:8px 11px 8px 13px;border-radius:5px 0 0 5px;background:#fff;color:#138b58;font-size:9px;font-weight:950;letter-spacing:.2px;box-shadow:0 7px 16px rgba(20,20,50,.18);clip-path:polygon(8% 0,100% 0,100% 100%,8% 100%,0 50%);white-space:nowrap}.service-availability:after{content:"";position:absolute;left:0;top:50%;width:5px;height:5px;transform:translate(-50%,-50%);background:#fff;border-radius:50%}
  .hindi-tagline{margin:16px 0 4px;text-align:center;font-family:"Noto Serif Devanagari","Nirmala UI","Mangal",serif;font-size:22px;font-weight:800;letter-spacing:.2px;color:#6d35df;font-style:italic}
  .hindi-subtagline{text-align:center;color:#777;font-size:11px;font-weight:700;margin:0 0 16px}
  .manager-card{padding:18px;background:linear-gradient(135deg,#fff,#f8f2ff);border:1px solid #e8def8}
- .manager-card h3{margin:0 0 10px;font-size:18px}.manager-line{font-size:11px;color:#555;margin:6px 0}.manager-line b{color:#24242e}
+ .manager-card h3{margin:0 0 10px;font-size:18px}.manager-line{font-size:11px;color:#555;margin:6px 0}.manager-line b{color:#24242e}.about-card{padding:0;overflow:hidden;background:#fff;border:1px solid #e8e8ef}.about-poster{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:linear-gradient(135deg,#f3efff,#eef7ff)}.about-placeholder{display:grid;place-items:center;min-height:180px;padding:25px;text-align:center;color:#777;font-size:11px}.manager-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.manager-action{height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:11px;font-weight:900}.manager-call{background:#e9fff4;color:#0b9d5a}.manager-wa{background:#e9fff0;color:#14944f}
  .time-picker-card{padding:14px;background:#fff;border:1px solid #e5e5ed;border-radius:14px}.time-picker-card input{width:100%;height:48px;border:1px solid #e1e1ea;border-radius:12px;padding:0 13px;background:#fafaff;font-size:16px;font-weight:800;color:#333}
 
 .contact-price strong{font-size:16px!important;color:#6d35df!important;display:block;animation:none!important}
@@ -673,8 +673,14 @@ function home(){
    <div class="card trust"><div class="trust-icon">🛡️</div><div><h4>Trusted Service At Your Doorstep</h4><p>Professional technicians • Price confirmed on contact • Service support</p></div></div>
    <div class="hindi-tagline">आपकी सुविधा, हमारी जिम्मेदारी</div>
    <div class="hindi-subtagline">एक कॉल करें, समाधान घर पे पाएँ</div>
+   <div class="section-title">About SANGAM</div>
+   <div class="card about-card">
+    <img class="about-poster" src="assets/company-poster.jpg" alt="SANGAM company poster" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+    <div class="about-placeholder" style="display:none"><div><b>Company Poster</b><br><span>Upload your shop/company poster in GitHub at<br><code>assets/company-poster.jpg</code></span></div></div>
+    <div style="padding:13px"><b style="font-size:13px">SANGAM</b><div style="font-size:10px;color:#777;margin-top:4px">Professional doorstep service for your home and business needs.</div></div>
+   </div>
    <div class="section-title">Manager Details</div>
-   <div class="card manager-card"><h3>SANGAM</h3><div class="manager-line"><b>Contact No.:</b> +91 7859056418</div><div class="manager-line"><b>WhatsApp:</b> +91 7859056418</div><div class="manager-line"><b>Address:</b> Saidpur Pusa, Samastipur (Bihar), PIN - 848125</div></div>
+   <div class="card manager-card"><h3>SANGAM</h3><div class="manager-line"><b>Contact No.:</b> +91 7859056418</div><div class="manager-line"><b>WhatsApp:</b> +91 7859056418</div><div class="manager-line"><b>Address:</b> Saidpur Pusa, Samastipur (Bihar), PIN - 848125</div><div class="manager-actions"><a class="manager-action manager-call" href="tel:7859056418">☎ Call Manager</a><a class="manager-action manager-wa" href="https://wa.me/917859056418" target="_blank" rel="noopener">◉ WhatsApp</a></div></div>
   </div>${bottom("home")}
  </div>`;
 }
@@ -797,7 +803,11 @@ function confirmBooking(serviceId){
  if(!/^[0-9+ -]{10,15}$/.test(phone)){toast("Please enter a valid phone number");return}
  if(!address){toast("Please add your address");return}
  const s=service(serviceId);
- const booking={id:uid("SDS"),serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt:new Date().toISOString()};
+ const serviceCode=String(s.id||s.name).replace(/[^a-z0-9]/gi,"").toUpperCase();
+ const customerCode=String(name).trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi,"").toUpperCase()||"USER";
+ const userServiceOrders=DB.bookings.filter(x=>x.serviceId===serviceId && String(x.name||"").trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi,"").toUpperCase()===customerCode);
+ const serial=userServiceOrders.length+1;
+ const booking={id:`SDS_${serviceCode}_${serial}`,serviceId,date:getSelected("date"),time:getSelected("time"),address,name,phone,note:document.getElementById("note").value.trim(),total:s.price,status:"Confirmed",createdAt:new Date().toISOString()};
  DB.user.name=name;DB.user.phone=phone;DB.user.profileComplete=true;DB.bookings.push(booking);
  DB.notifications.push({id:uid("N"),title:"Booking Confirmed",text:`${s.name} service booked for ${booking.date} at ${booking.time}.`,createdAt:new Date().toISOString(),read:false});
  saveState();
