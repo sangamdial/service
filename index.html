@@ -80,6 +80,12 @@ button{cursor:pointer;border:0}
 @keyframes popularIn{from{opacity:0;transform:translateX(28px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes popularOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.985)}}
 .profile-address{font-size:9px;color:#888;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+ .service-availability{position:absolute;top:18px;right:18px;z-index:4;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.94);color:#138b58;font-size:10px;font-weight:900;box-shadow:0 8px 20px rgba(20,20,50,.12);backdrop-filter:blur(10px)}
+ .hindi-tagline{margin:16px 0 4px;text-align:center;font-family:"Noto Serif Devanagari","Nirmala UI","Mangal",serif;font-size:22px;font-weight:800;letter-spacing:.2px;color:#6d35df;font-style:italic}
+ .hindi-subtagline{text-align:center;color:#777;font-size:11px;font-weight:700;margin:0 0 16px}
+ .manager-card{padding:18px;background:linear-gradient(135deg,#fff,#f8f2ff);border:1px solid #e8def8}
+ .manager-card h3{margin:0 0 10px;font-size:18px}.manager-line{font-size:11px;color:#555;margin:6px 0}.manager-line b{color:#24242e}
+ .time-picker-card{padding:14px;background:#fff;border:1px solid #e5e5ed;border-radius:14px}.time-picker-card input{width:100%;height:48px;border:1px solid #e1e1ea;border-radius:12px;padding:0 13px;background:#fafaff;font-size:16px;font-weight:800;color:#333}
 
 .contact-price strong{font-size:16px!important;color:#6d35df!important;display:block;animation:none!important}
 .contact-price em{display:block;font-style:normal;font-size:9px;color:#888;margin-top:2px}
@@ -339,31 +345,19 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
    <div class="auth-mobile-card">
     <h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Choose how you want to sign in.</p>
     <div id="authErrorMobile" class="auth-error"></div>
-    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
-    <div class="auth-divider"><span>OR</span></div>
-    <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneMobile" inputmode="tel" autocomplete="tel" placeholder="Mobile number"></div>
-    <div id="recaptchaMobile"></div>
-    <button id="phoneSendMobile" class="auth-action purple" onclick="firebaseSendOTP('mobile')">Send OTP&nbsp; →</button>
-    <div id="otpMobile" class="auth-otp"><div style="height:9px"></div><input id="authOtpMobile" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('mobile')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('mobile')">Change number</button></div>
-    <div class="auth-note">By continuing, you agree to use Firebase Authentication for secure account sign-in.</div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button><div class="auth-note">Sign in securely with your Google account.</div>
    </div>
   </div>
   <div class="auth-desktop">
    <section class="auth-desktop-art">
     <div class="auth-desktop-brand"><div class="auth-brand-mark">S</div><div><b>SANGAM DIAL</b><small>SERVICE</small></div></div>
-    <div class="auth-desktop-copy"><div style="font-size:12px;font-weight:900;letter-spacing:2px;margin-bottom:14px;opacity:.8">WELCOME TO YOUR SERVICE HUB</div><h1>Everything about your service, in one place.</h1><p>Sign in to keep your customer profile, addresses, bookings and support requests safely synced with your account.</p><div class="auth-benefits"><div class="auth-benefit">☁️ Cloud Sync<br><span style="opacity:.7">Across your devices</span></div><div class="auth-benefit">📦 Bookings<br><span style="opacity:.7">Always available</span></div><div class="auth-benefit">📍 Addresses<br><span style="opacity:.7">Auto-filled at booking</span></div><div class="auth-benefit">🔐 Secure Login<br><span style="opacity:.7">Google or phone OTP</span></div></div></div>
+    <div class="auth-desktop-copy"><div style="font-size:12px;font-weight:900;letter-spacing:2px;margin-bottom:14px;opacity:.8">WELCOME TO YOUR SERVICE HUB</div><h1>Everything about your service, in one place.</h1><p>Sign in to keep your customer profile, addresses, bookings and support requests safely synced with your account.</p><div class="auth-benefits"><div class="auth-benefit">☁️ Cloud Sync<br><span style="opacity:.7">Across your devices</span></div><div class="auth-benefit">📦 Bookings<br><span style="opacity:.7">Always available</span></div><div class="auth-benefit">📍 Addresses<br><span style="opacity:.7">Auto-filled at booking</span></div><div class="auth-benefit">🔐 Secure Login<br><span style="opacity:.7">Google Sign-In</span></div></div></div>
     <footer>SANGAM DIAL SERVICE • Secure customer account</footer>
    </section>
    <section class="auth-desktop-form"><div class="auth-desktop-card">
     <div style="font-size:10px;color:#7a3de0;font-weight:900;letter-spacing:1.8px;margin-bottom:10px">CUSTOMER LOGIN</div><h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Sign in to access your synced profile and bookings.</p>
     <div id="authErrorDesktop" class="auth-error"></div>
-    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
-    <div class="auth-divider"><span>OR CONTINUE WITH PHONE</span></div>
-    <div class="auth-phone-row"><div class="auth-country">🇮🇳 +91</div><input id="authPhoneDesktop" inputmode="tel" autocomplete="tel" placeholder="10 digit mobile number"></div>
-    <div id="recaptchaDesktop"></div>
-    <button id="phoneSendDesktop" class="auth-action purple" onclick="firebaseSendOTP('desktop')">Send OTP&nbsp; →</button>
-    <div id="otpDesktop" class="auth-otp"><div style="height:10px"></div><input id="authOtpDesktop" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP"><button class="auth-action pink" onclick="firebaseVerifyOTP('desktop')">Verify & Sign In</button><button class="auth-change" onclick="resetPhoneLogin('desktop')">Change number</button></div>
-    <div class="auth-note">Your account data is stored in Cloud Firestore and synced in real time after login.</div>
+    <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button><div class="auth-note">Your account data is stored in Cloud Firestore and synced in real time after login.</div>
    </div></section>
   </div>
  </div>
@@ -390,8 +384,6 @@ let FIREBASE_READY = false;
 let CLOUD_LOADING = false;
 let CLOUD_LISTENER = null;
 let CLOUD_WRITE_TIMER = null;
-let PHONE_CONFIRMATION = {mobile:null,desktop:null};
-let PHONE_RECAPTCHA = {mobile:null,desktop:null};
 
 
 const firebaseConfig = {
@@ -500,21 +492,6 @@ async function hydrateCloudUser(user){
 }
 function showAuthError(msg){["Mobile","Desktop"].forEach(x=>{const el=document.getElementById("authError"+x);if(el){el.textContent=msg;el.classList.add("show")}})}
 function clearAuthError(){["Mobile","Desktop"].forEach(x=>document.getElementById("authError"+x)?.classList.remove("show"))}
-function authPhoneInput(mode){return document.getElementById(mode==="mobile"?"authPhoneMobile":"authPhoneDesktop")}
-function authOtpInput(mode){return document.getElementById(mode==="mobile"?"authOtpMobile":"authOtpDesktop")}
-function recaptchaId(mode){return mode==="mobile"?"recaptchaMobile":"recaptchaDesktop"}
-function sendButton(mode){return document.getElementById(mode==="mobile"?"phoneSendMobile":"phoneSendDesktop")}
-function otpBox(mode){return document.getElementById(mode==="mobile"?"otpMobile":"otpDesktop")}
-function resetRecaptcha(mode){
- try{if(PHONE_RECAPTCHA[mode])PHONE_RECAPTCHA[mode].clear()}catch(_){ }
- PHONE_RECAPTCHA[mode]=null;
- const box=document.getElementById(recaptchaId(mode));if(box)box.innerHTML="";
-}
-function createRecaptcha(mode){
- resetRecaptcha(mode);
- PHONE_RECAPTCHA[mode]=new firebase.auth.RecaptchaVerifier(recaptchaId(mode),{size:"invisible",callback:()=>{},"expired-callback":()=>{}});
- return PHONE_RECAPTCHA[mode];
-}
 async function firebaseGoogleLogin(){
  clearAuthError();
  if(!FIREBASE_READY){showAuthError("Firebase could not initialize. Please open the site from a web server and check your Firebase setup.");return}
@@ -522,33 +499,6 @@ async function firebaseGoogleLogin(){
   const provider=new firebase.auth.GoogleAuthProvider();
   if(window.innerWidth<900){await firebaseAuth.signInWithRedirect(provider)}else{await firebaseAuth.signInWithPopup(provider)}
  }catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
-}
-async function firebaseSendOTP(mode){
- clearAuthError();
- if(!FIREBASE_READY){showAuthError("Firebase could not initialize.");return}
- let raw=authPhoneInput(mode)?.value.trim().replace(/[^0-9+]/g,"");
- if(/^0/.test(raw))raw="+91"+raw.slice(1);
- if(/^91/.test(raw)&&!raw.startsWith("+"))raw="+"+raw;
- if(!/^\+91[6-9]\d{9}$/.test(raw)){showAuthError("Please enter a valid 10-digit Indian mobile number.");return}
- const btn=sendButton(mode);if(btn){btn.disabled=true;btn.textContent="Sending OTP…"}
- try{
-  const verifier=createRecaptcha(mode);
-  PHONE_CONFIRMATION[mode]=await firebaseAuth.signInWithPhoneNumber(raw,verifier);
-  otpBox(mode)?.classList.add("show");
-  if(btn){btn.textContent="OTP Sent ✓";btn.disabled=false}
-  toast("OTP sent to your mobile number");
- }catch(err){
-  console.error(err);resetRecaptcha(mode);if(btn){btn.textContent="Send OTP →";btn.disabled=false}showAuthError(firebaseFriendlyError(err));
- }
-}
-async function firebaseVerifyOTP(mode){
- clearAuthError();
- const code=authOtpInput(mode)?.value.trim();
- if(!/^\d{6}$/.test(code)){showAuthError("Enter the 6-digit OTP you received.");return}
- try{await PHONE_CONFIRMATION[mode].confirm(code);PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode)}catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
-}
-function resetPhoneLogin(mode){
- PHONE_CONFIRMATION[mode]=null;resetRecaptcha(mode);otpBox(mode)?.classList.remove("show");const input=authPhoneInput(mode);if(input)input.focus();
 }
 function firebaseFriendlyError(err){
  const code=err?.code||"";
@@ -694,6 +644,7 @@ function home(){
  const recent=DB.bookings.slice().reverse().slice(0,2);
  return `<div class="screen">
   <div class="top-gradient home-head">
+   <div class="service-availability">Service available Within 24 Hours</div>
    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button></div>
    <div class="hello compact-hello">Hello, ${esc(DB.user.name||"User")} 👋</div>
    <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
@@ -720,6 +671,10 @@ function home(){
    </div>
    <div class="section-title">Why Sangam?</div>
    <div class="card trust"><div class="trust-icon">🛡️</div><div><h4>Trusted Service At Your Doorstep</h4><p>Professional technicians • Price confirmed on contact • Service support</p></div></div>
+   <div class="hindi-tagline">आपकी सुविधा, हमारी जिम्मेदारी</div>
+   <div class="hindi-subtagline">एक कॉल करें, समाधान घर पे पाएँ</div>
+   <div class="section-title">Manager Details</div>
+   <div class="card manager-card"><h3>SANGAM</h3><div class="manager-line"><b>Contact No.:</b> +91 7859056418</div><div class="manager-line"><b>WhatsApp:</b> +91 7859056418</div><div class="manager-line"><b>Address:</b> Saidpur Pusa, Samastipur (Bihar), PIN - 848125</div></div>
   </div>${bottom("home")}
  </div>`;
 }
@@ -751,14 +706,17 @@ function bookPage(id){
  const now=new Date(); let dates=[];
  for(let i=0;i<7;i++){let d=new Date(now);d.setDate(now.getDate()+i);dates.push(d)}
  const dateButtons=dates.map((d,i)=>`<button class="choice ${i===0?"selected":""}" data-date="${d.toISOString().slice(0,10)}" onclick="selectChoice(this,'date')">${i===0?"Today":d.toLocaleDateString("en-IN",{weekday:"short"})}<br><b>${d.getDate()}</b><br>${d.toLocaleDateString("en-IN",{month:"short"})}</button>`).join("");
- const times=["10:00 AM","12:00 PM","02:00 PM","04:00 PM"];
  return `<div class="screen">
   ${header("Book Service")}
   <div class="form">
    <div class="card service-body" style="margin-bottom:12px"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div><h2 style="font-size:17px;margin:0 0 5px">${esc(s.name)} Repair & Installation</h2><p style="margin:0;color:#777;font-size:11px">Professional doorstep service</p><strong style="color:#7a2edb">Contact us for service price</strong></div></div></div>
    <div class="section-title" style="margin-left:0">Select Date & Time</div>
    <div class="date-grid" id="dateGrid">${dateButtons}</div>
-   <div class="time-grid" id="timeGrid" style="margin-top:9px">${times.map((t,i)=>`<button class="choice ${i===0?"selected":""}" data-time="${t}" onclick="selectChoice(this,'time')">${t}</button>`).join("")}</div>
+   <div class="time-picker-card" id="timeGrid" style="margin-top:9px">
+     <label style="display:block;font-size:11px;font-weight:900;margin-bottom:7px">Set Your Preferred Time</label>
+     <input id="customTime" type="time" value="10:00" aria-label="Select service time">
+     <div style="font-size:9px;color:#888;margin-top:7px">Choose any convenient time for your service visit.</div>
+   </div>
    <div class="section-title" style="margin-left:0">Location</div>
    <div class="card location-card" style="padding:14px">
       <div class="location-main" onclick="chooseAddress()"><div class="location-pin">⌖</div><div style="flex:1"><b>${esc(DB.addresses[0]?.label||"Home")}</b><div style="font-size:11px;color:#777;margin-top:3px" id="addressText">${esc(DB.addresses[0]?.address||"Add your address")}</div></div><b>›</b></div>
@@ -771,7 +729,7 @@ function bookPage(id){
    <div class="field"><label>Add Note (Optional)</label><textarea id="note" maxlength="120" placeholder="Describe your issue..."></textarea></div>
    <div class="card summary"><div class="contact-pricing-note"><div class="cp-icon">₹</div><div><b>Price will be confirmed on contact</b><span>Final service price depends on the issue and required work. Our team will confirm it with you.</span></div></div></div>
   </div>
-  <div class="sticky-action"><button class="full purple" onclick="confirmBooking('${s.id}')">Confirm Booking &nbsp; →</button><div style="text-align:center;font-size:10px;color:#777;margin-top:8px">🔒 Secure Booking • Price confirmed on contact</div></div>
+  <div class="sticky-action"><button class="full purple" onclick="confirmBooking('${s.id}')">Book &nbsp; →</button><div style="text-align:center;font-size:10px;color:#777;margin-top:8px">🔒 Secure Booking • Price confirmed on contact</div></div>
  </div>`;
 }
 function bookingsPage(){
@@ -824,8 +782,12 @@ function selectChoice(btn,type){
  btn.classList.add("selected");
 }
 function getSelected(type){
- const el=document.querySelector((type==="date"?"#dateGrid":"#timeGrid")+" .choice.selected");
- return type==="date"?el?.dataset.date:el?.dataset.time;
+ if(type==="date"){const el=document.querySelector("#dateGrid .choice.selected");return el?.dataset.date;}
+ const input=document.getElementById("customTime");
+ if(!input?.value)return "";
+ const [h,m]=input.value.split(":").map(Number);
+ const suffix=h>=12?"PM":"AM", hh=(h%12)||12;
+ return `${String(hh).padStart(2,"0")}:${String(m).padStart(2,"0")} ${suffix}`;
 }
 function confirmBooking(serviceId){
  const name=document.getElementById("custName").value.trim(), phone=document.getElementById("custPhone").value.trim();
@@ -840,6 +802,7 @@ function confirmBooking(serviceId){
  DB.notifications.push({id:uid("N"),title:"Booking Confirmed",text:`${s.name} service booked for ${booking.date} at ${booking.time}.`,createdAt:new Date().toISOString(),read:false});
  saveState();
  openBookingSuccess(booking);
+ openOrderMessages(booking);
 }
 function openBookingSuccess(b){
  document.getElementById("sheet").innerHTML=`<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
@@ -868,6 +831,16 @@ Status: ${b.status}
 
 Please contact me regarding this service booking.`;
 }
+function openOrderMessages(b){
+  const msg=encodeURIComponent(orderMessage(b));
+  const wa=`https://wa.me/${BUSINESS_WHATSAPP}?text=${msg}`;
+  const sms=`sms:${BUSINESS_PHONE}?body=${msg}`;
+  const waWindow=window.open(wa,"_blank","noopener");
+  const smsWindow=window.open(sms,"_blank","noopener");
+  if(!waWindow && !smsWindow) toast("Booking saved. Please allow popups to open WhatsApp and SMS.");
+  else if(!smsWindow) toast("WhatsApp opened. SMS could not be opened automatically on this device.");
+}
+
 function contactButtons(b){
  const msg=encodeURIComponent(orderMessage(b));
  const wa=`https://wa.me/${BUSINESS_WHATSAPP}?text=${msg}`;
