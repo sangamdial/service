@@ -625,22 +625,123 @@ async function handleAuthUser(user){
   document.getElementById("authLoading")?.classList.add("hide");
   document.getElementById("app").style.display="block";
   render();
+  
+  // 🔔 Request notification permission
+  requestNotificationPermission();
+  
   setTimeout(()=>{if(needsOnboarding())showOnboarding();startPopularSlider()},150);
  }catch(err){
   CLOUD_LOADING=false;console.error(err);document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Could not load your cloud profile. Please try again.");
  }
 }
+
+// 🔔 BROWSER NOTIFICATION FUNCTIONS 🔔
+function requestNotificationPermission(){
+  if (!("Notification" in window)) {
+    console.log("This browser does not support notifications");
+    return;
+  }
+  
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(function(permission) {
+      if (permission === "granted") {
+        toast("🔔 Notifications enabled! You'll get alerts for new bookings.");
+      } else {
+        toast("🔔 Please allow notifications to get booking alerts.");
+      }
+    });
+  } else if (Notification.permission === "granted") {
+    toast("🔔 Notifications are enabled.");
+  }
+}
+
+function sendBrowserNotification(title, body, bookingId){
+  if (!("Notification" in window)) {
+    console.log("This browser does not support notifications");
+    return;
+  }
+  
+  if (Notification.permission === "granted") {
+    const notification = new Notification(title, {
+      body: body,
+      icon: "https://img.icons8.com/color/96/000000/service.png",
+      tag: bookingId || "booking",
+      requireInteraction: true,
+      silent: false
+    });
+    
+    notification.onclick = function() {
+      window.focus();
+      if (route.page !== "manager" && IS_MANAGER) {
+        go("manager");
+      } else if (route.page !== "bookings") {
+        go("bookings");
+      }
+      notification.close();
+    };
+    
+    setTimeout(() => {
+      notification.close();
+    }, 15000);
+    
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(function(permission) {
+      if (permission === "granted") {
+        sendBrowserNotification(title, body, bookingId);
+      }
+    });
+  }
+}
+
+// 📤 SEND WHATSAPP MESSAGE TO CUSTOMER
+function sendWhatsAppToCustomer(phone, message){
+  if(!phone) return;
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  if(cleanPhone.length < 10) return;
+  const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, "_blank", "noopener");
+}
+
+function getCustomerWhatsAppMessage(b, status, reason){
+  const s = service(b.serviceId);
+  if(status === "Confirmed"){
+    return `✅ Your booking has been CONFIRMED!
+
+📋 Order ID: ${b.id}
+🔧 Service: ${s.name}
+📅 Date: ${b.date}
+⏰ Time: ${b.time}
+📍 Address: ${b.address}
+👤 Customer: ${b.name}
+
+Thank you for choosing Sangam Dial Service!
+For any query, contact: 7859056418`;
+  } else {
+    return `❌ Your booking has been REJECTED.
+
+📋 Order ID: ${b.id}
+🔧 Service: ${s.name}
+📅 Date: ${b.date}
+⏰ Time: ${b.time}
+📍 Address: ${b.address}
+👤 Customer: ${b.name}
+
+Reason: ${reason || 'Not specified'}
+
+We apologize for the inconvenience.
+For any query, contact: 7859056418`;
+  }
+}
+
 async function signOutUser(){
  try{
   stopCloudSync();
   await firebaseAuth.signOut();
-  // Reset UI state
   document.getElementById("app").style.display = "none";
   document.getElementById("authGate")?.classList.add("show");
   document.getElementById("authLoading")?.classList.remove("hide");
   IS_MANAGER = false;
   MANAGER_AUTH_UID = null;
-  // Hide loading animation and show login
   setTimeout(() => {
    document.getElementById("authLoading")?.classList.add("hide");
   }, 500);
@@ -1026,7 +1127,7 @@ async function loadManagerPanel(){
 }
 
 /* ============================================================
-   ✅ UPDATED FUNCTION — DIRECT UPDATE (NO TRANSACTION)
+   ✅ UPDATED FUNCTION — WITH NOTIFICATIONS & WHATSAPP
    ============================================================ */
 async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason){
   if(!IS_MANAGER){toast("Manager access is restricted");return}
@@ -1037,7 +1138,6 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
   try{
     const ref = firestore.collection("users").doc(uidValue);
     
-    // Direct read
     const snap = await ref.get();
     if(!snap.exists) {
       toast("Customer record not found");
@@ -1048,7 +1148,6 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
     let bookings = Array.isArray(data.bookings) ? data.bookings : [];
     let target = null;
     
-    // Update the booking
     bookings = bookings.map(b => {
       if(b.id === bookingId) {
         target = b;
@@ -1076,21 +1175,23 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
       return;
     }
     
-    // Create notification
     const s = service(target.serviceId);
     const notifications = Array.isArray(data.notifications) ? data.notifications.slice() : [];
-    notifications.push({
+    
+    // Customer notification
+    const customerNotif = {
       id: "N_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
-      title: newStatus === "Confirmed" ? "✅ Booking Confirmed" : "❌ Booking Rejected",
+      title: newStatus === "Confirmed" ? "✅ Booking Confirmed!" : "❌ Booking Rejected",
       text: newStatus === "Confirmed"
-        ? `${s.name} booking (${target.id}) has been confirmed by the manager.`
-        : `${s.name} booking (${target.id}) was rejected. Reason: ${reason || 'Not specified'}`,
+        ? `Your ${s.name} booking (${target.id}) has been CONFIRMED by the manager.`
+        : `Your ${s.name} booking (${target.id}) has been REJECTED. Reason: ${reason || 'Not specified'}`,
       createdAt: new Date().toISOString(),
       read: false,
-      bookingId: target.id
-    });
+      bookingId: target.id,
+      type: "status_update"
+    };
+    notifications.push(customerNotif);
     
-    // Direct set to Firestore
     await ref.set({
       bookings: bookings,
       notifications: notifications,
@@ -1107,6 +1208,22 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
     await loadManagerPanel();
     closeModal();
     
+    // 🔔 Send Browser Notification to Manager
+    sendBrowserNotification(
+      newStatus === "Confirmed" ? "✅ Booking Confirmed!" : "❌ Booking Rejected",
+      `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`,
+      target.id
+    );
+    
+    // 📤 Send WhatsApp message to customer    const customerPhone = target.phone || data.user?.phone || "";
+    if(customerPhone){
+      const msg = getCustomerWhatsAppMessage(target, newStatus, reason);
+      sendWhatsAppToCustomer(customerPhone, msg);
+      toast("📤 WhatsApp message sent to customer");
+    } else {
+      toast("⚠️ Customer phone not available for WhatsApp");
+    }
+    
   } catch(err){
     console.error("Manager status update failed", err);
     toast("Error: " + (err.message || "Unknown error"));
@@ -1115,7 +1232,7 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
 
 function showRejectReasonModal(uidValue, bookingId){
  document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Reject Booking</h3><button class="close" onclick="closeModal()">×</button></div>
-  <p style="font-size:12px;color:#666;margin-bottom:12px">Please provide a reason for rejecting this booking. The customer will see this reason in their booking details.</p>
+  <p style="font-size:12px;color:#666;margin-bottom:12px">Please provide a reason for rejecting this booking. The customer will see this reason in their booking details and WhatsApp.</p>
   <div class="field"><label>Rejection Reason</label><textarea id="rejectReasonInput" placeholder="e.g. Technician not available on selected date, Service not available in this area, etc." rows="3"></textarea></div>
   <button class="full pink" onclick="confirmRejectBooking('${uidValue}','${bookingId}')">Confirm Rejection</button>
   <button class="full" style="background:#eee;color:#333;margin-top:8px" onclick="closeModal()">Cancel</button>`;
@@ -1226,6 +1343,15 @@ function confirmBooking(serviceId){
  saveState();
  openBookingSuccess(booking);
  openOrderMessages(booking);
+ 
+ // 🔔 Send notification to manager if manager is logged in
+ if(IS_MANAGER){
+   sendBrowserNotification(
+     "📦 New Booking Received!",
+     `${s.name} service booked by ${name} for ${booking.date} at ${booking.time}`,
+     booking.id
+   );
+ }
 }
 function openBookingSuccess(b){
  document.getElementById("sheet").innerHTML=`<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
