@@ -471,6 +471,12 @@ let CLOUD_WRITE_TIMER = null;
 let MANAGER_AUTH_UID = null;
 let IS_MANAGER = false;
 
+// Prevent Firebase auth callbacks and manual login handlers from running the
+// cloud hydration twice at the same time (especially after mobile redirect).
+let AUTH_HANDLED_UID = null;
+let AUTH_HANDLING = false;
+let AUTH_INITIALIZED = false;
+
 const firebaseConfig = {
  apiKey: "AIzaSyC4lmSeMYkgvtrRzhd51txVuOTdjKh2quk",
  authDomain: "sangamdialservice-893b6.firebaseapp.com",
@@ -555,39 +561,97 @@ async function mergeLocalIntoCloud(uid,cloudData){
 async function hydrateCloudUser(user){
  switchUserStorage(user.uid);
  const ref=cloudUserRef();
+ if(!ref) throw new Error("Cloud database is not available.");
+
  let snap=await ref.get();
  if(!snap.exists){
-   DB=normalizeCloudData({user:{name:user.displayName||"",email:user.email||"",phone:user.phoneNumber||"",avatar:initials(user.displayName||"U"),profileComplete:false}});
-   await ref.set({uid:user.uid,user:DB.user,addresses:[],bookings:[],notifications:[],support:[],settings:DB.settings,meta:DB.meta,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   DB=normalizeCloudData({
+     user:{
+       name:user.displayName||"",
+       email:user.email||"",
+       phone:user.phoneNumber||"",
+       avatar:initials(user.displayName||"U"),
+       profileComplete:false
+     }
+   });
+   await ref.set({
+     uid:user.uid,
+     user:DB.user,
+     addresses:[],
+     bookings:[],
+     notifications:[],
+     support:[],
+     settings:DB.settings,
+     meta:DB.meta,
+     createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+   },{merge:true});
  }else{
    const cloud=normalizeCloudData(snap.data());
    DB=await mergeLocalIntoCloud(user.uid,cloud);
-   DB.user={...DB.user,email:user.email||DB.user.email||"",phone:DB.user.phone||user.phoneNumber||"",avatar:initials(DB.user.name||user.displayName||"U")};
+   DB.user={
+     ...DB.user,
+     email:user.email||DB.user.email||"",
+     phone:DB.user.phone||user.phoneNumber||"",
+     avatar:initials(DB.user.name||user.displayName||"U")
+   };
    const removed=pruneExpiredBookings(DB);
-    saveState(false);
-    if(removed)scheduleCloudSync();
+   saveState(false);
+   if(removed)scheduleCloudSync();
  }
+
+ // Never leave an older listener alive when auth changes/re-authentication happens.
+ if(CLOUD_LISTENER){
+   try{CLOUD_LISTENER()}catch(_){}
+   CLOUD_LISTENER=null;
+ }
+
  CLOUD_LISTENER=ref.onSnapshot(s=>{
    if(!s.exists||CLOUD_LOADING)return;
    const incoming=normalizeCloudData(s.data());
-    const removed=pruneExpiredBookings(incoming);
-    DB=incoming;
-    saveState(false);
-    if(removed)scheduleCloudSync();
+   const removed=pruneExpiredBookings(incoming);
+   DB=incoming;
+   saveState(false);
+   if(removed)scheduleCloudSync();
    if(document.getElementById("app").style.display!=="none")render();
- },err=>console.error("Firestore listener error",err));
- await ref.set({lastLoginAt:firebase.firestore.FieldValue.serverTimestamp(),email:user.email||null,authPhone:user.phoneNumber||null},{merge:true});
+ },err=>{
+   console.error("Firestore listener error",err);
+ });
+
+ await ref.set({
+   lastLoginAt:firebase.firestore.FieldValue.serverTimestamp(),
+   email:user.email||null,
+   authPhone:user.phoneNumber||null
+ },{merge:true});
 }
+
 function showAuthError(msg){["Mobile","Desktop"].forEach(x=>{const el=document.getElementById("authError"+x);if(el){el.textContent=msg;el.classList.add("show")}})}
 function clearAuthError(){["Mobile","Desktop"].forEach(x=>document.getElementById("authError"+x)?.classList.remove("show"))}
 async function firebaseGoogleLogin(){
  clearAuthError();
- if(!FIREBASE_READY){showAuthError("Firebase could not initialize. Please open the site from a web server and check your Firebase setup.");return}
+ if(!FIREBASE_READY||!firebaseAuth){
+   showAuthError("Firebase could not initialize. Please open the site from a web server and check your Firebase setup.");
+   return;
+ }
  try{
-  const provider=new firebase.auth.GoogleAuthProvider();
-  if(window.innerWidth<900){await firebaseAuth.signInWithRedirect(provider)}else{await firebaseAuth.signInWithPopup(provider)}
- }catch(err){console.error(err);showAuthError(firebaseFriendlyError(err))}
+   // Explicit persistence makes the mobile redirect flow reliable across reloads.
+   await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+   const provider=new firebase.auth.GoogleAuthProvider();
+   provider.setCustomParameters({prompt:"select_account"});
+
+   if(window.innerWidth<900){
+     await firebaseAuth.signInWithRedirect(provider);
+   }else{
+     await firebaseAuth.signInWithPopup(provider);
+   }
+ }catch(err){
+   console.error("Google sign-in failed",err);
+   showAuthError(firebaseFriendlyError(err));
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("authGate")?.classList.add("show");
+ }
 }
+
 function firebaseFriendlyError(err){
  const code=err?.code||"";
  const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication."};
@@ -602,36 +666,80 @@ async function managerEmailLogin(){
  const desktopPass = document.getElementById("managerPasswordLoginDesktop")?.value?.trim();
  const email = mobileEmail || desktopEmail;
  const password = mobilePass || desktopPass;
+
  if(!email || !password){showAuthError("Please enter email and password");return}
- if(email.toLowerCase() !== "sangamdialservice@gmail.com"){showAuthError("Only manager email is allowed");return}
+ if(email.toLowerCase() !== "sangamdialservice@gmail.com"){
+   showAuthError("Only manager email is allowed");
+   return;
+ }
+ if(!FIREBASE_READY||!firebaseAuth){
+   showAuthError("Firebase could not initialize. Please try again.");
+   return;
+ }
+
  try{
-  const cred = await firebaseAuth.signInWithEmailAndPassword(email, password);
-  IS_MANAGER = true;
-  MANAGER_AUTH_UID = cred.user.uid;
-  await handleAuthUser(cred.user);
+   await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+   // onAuthStateChanged() is the single source of truth and will open the app.
+   await firebaseAuth.signInWithEmailAndPassword(email,password);
  }catch(err){
-  console.error(err);
-  showAuthError(firebaseFriendlyError(err) || "Invalid manager credentials. Please check email and password.");
+   console.error("Manager login failed",err);
+   showAuthError(firebaseFriendlyError(err) || "Invalid manager credentials. Please check email and password.");
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("authGate")?.classList.add("show");
  }
 }
 
 async function handleAuthUser(user){
+ if(!user?.uid)return;
+
+ // Firebase can emit auth state more than once during a redirect. Do not
+ // hydrate/render the same account twice.
+ if(AUTH_HANDLING || AUTH_HANDLED_UID===user.uid)return;
+ AUTH_HANDLING=true;
+ AUTH_HANDLED_UID=user.uid;
+
  document.getElementById("authLoading")?.classList.remove("hide");
+ document.getElementById("authGate")?.classList.remove("show");
+
  try{
-  CLOUD_LOADING=true;
-  await hydrateCloudUser(user);
-  CLOUD_LOADING=false;
-  document.getElementById("authGate")?.classList.remove("show");
-  document.getElementById("authLoading")?.classList.add("hide");
-  document.getElementById("app").style.display="block";
-  render();
-  
-  // 🔔 Request notification permission
-  requestNotificationPermission();
-  
-  setTimeout(()=>{if(needsOnboarding())showOnboarding();startPopularSlider()},150);
+   CLOUD_LOADING=true;
+   await hydrateCloudUser(user);
+   CLOUD_LOADING=false;
+
+   const isManager=user.email?.toLowerCase()==="sangamdialservice@gmail.com";
+   IS_MANAGER=isManager;
+   MANAGER_AUTH_UID=isManager?user.uid:null;
+
+   document.getElementById("authGate")?.classList.remove("show");
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("app").style.display="block";
+   render();
+
+   // 🔔 Request notification permission
+   requestNotificationPermission();
+
+   setTimeout(()=>{
+     if(needsOnboarding())showOnboarding();
+     startPopularSlider();
+   },150);
  }catch(err){
-  CLOUD_LOADING=false;console.error(err);document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Could not load your cloud profile. Please try again.");
+   CLOUD_LOADING=false;
+   AUTH_HANDLED_UID=null;
+   console.error("Auth/cloud hydration failed",err);
+   document.getElementById("app").style.display="none";
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("authGate")?.classList.add("show");
+
+   const code=err?.code||"";
+   if(code==="permission-denied"||code==="firestore/permission-denied"){
+     showAuthError("Login succeeded, but Firebase database access is blocked by your Firestore rules.");
+   }else if(code==="unavailable"){
+     showAuthError("Firebase is temporarily unavailable. Please check your internet and try again.");
+   }else{
+     showAuthError("Could not load your cloud profile. Please check your internet/Firebase rules and try again.");
+   }
+ }finally{
+   AUTH_HANDLING=false;
  }
 }
 
@@ -736,36 +844,56 @@ For any query, contact: 7859056418`;
 async function signOutUser(){
  try{
   stopCloudSync();
+  AUTH_HANDLED_UID=null;
+  AUTH_HANDLING=false;
+  IS_MANAGER=false;
+  MANAGER_AUTH_UID=null;
   await firebaseAuth.signOut();
-  document.getElementById("app").style.display = "none";
+  document.getElementById("app").style.display="none";
   document.getElementById("authGate")?.classList.add("show");
-  document.getElementById("authLoading")?.classList.remove("hide");
-  IS_MANAGER = false;
-  MANAGER_AUTH_UID = null;
-  setTimeout(() => {
-   document.getElementById("authLoading")?.classList.add("hide");
-  }, 500);
+  document.getElementById("authLoading")?.classList.add("hide");
+  route={page:"home",service:null};
  }catch(err){
   console.error(err);
   toast("Sign out failed. Please try again.");
  }
 }
 function initFirebaseAuth(){
- if(!FIREBASE_READY){document.getElementById("authLoading")?.classList.add("hide");document.getElementById("authGate")?.classList.add("show");showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");return}
- firebaseAuth.getRedirectResult().catch(err=>{if(err)showAuthError(firebaseFriendlyError(err))});
- firebaseAuth.onAuthStateChanged(async user=>{
-  if(user){
-   const isManager = user.email?.toLowerCase() === "sangamdialservice@gmail.com";
-   if(isManager) IS_MANAGER = true;
-   await handleAuthUser(user);
-  }else{
-   stopCloudSync();
-   document.getElementById("app").style.display = "none";
+ if(AUTH_INITIALIZED)return;
+ AUTH_INITIALIZED=true;
+
+ if(!FIREBASE_READY||!firebaseAuth){
    document.getElementById("authLoading")?.classList.add("hide");
    document.getElementById("authGate")?.classList.add("show");
-   IS_MANAGER = false;
-   MANAGER_AUTH_UID = null;
-  }
+   showAuthError("Firebase initialization failed. Check the Firebase config and run this site from a web server.");
+   return;
+ }
+
+ // Process redirect only for errors. The auth-state listener below is the
+ // single path that hydrates the user, avoiding duplicate handling on mobile.
+ firebaseAuth.getRedirectResult().catch(err=>{
+   console.error("Firebase redirect result error",err);
+   showAuthError(firebaseFriendlyError(err));
+   document.getElementById("authLoading")?.classList.add("hide");
+   document.getElementById("authGate")?.classList.add("show");
+ });
+
+ firebaseAuth.onAuthStateChanged(async user=>{
+   if(user){
+     const isManager=user.email?.toLowerCase()==="sangamdialservice@gmail.com";
+     IS_MANAGER=isManager;
+     MANAGER_AUTH_UID=isManager?user.uid:null;
+     await handleAuthUser(user);
+   }else{
+     stopCloudSync();
+     AUTH_HANDLED_UID=null;
+     AUTH_HANDLING=false;
+     document.getElementById("app").style.display="none";
+     document.getElementById("authLoading")?.classList.add("hide");
+     document.getElementById("authGate")?.classList.add("show");
+     IS_MANAGER=false;
+     MANAGER_AUTH_UID=null;
+   }
  });
 }
 
@@ -1215,7 +1343,8 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
       target.id
     );
     
-    // 📤 Send WhatsApp message to customer    const customerPhone = target.phone || data.user?.phone || "";
+    // 📤 Send WhatsApp message to customer
+    const customerPhone = target.phone || data.user?.phone || "";
     if(customerPhone){
       const msg = getCustomerWhatsAppMessage(target, newStatus, reason);
       sendWhatsAppToCustomer(customerPhone, msg);
