@@ -152,6 +152,7 @@ button{cursor:pointer;border:0}
 @media(prefers-reduced-motion:reduce){.service-photo,.photo-art img,.photo-art .photo-shine,.service-thumb:before,.primary:after,.purple:after,.pink:after{animation:none!important;transition:none!important}.cat:hover,.trust:hover,.primary:hover,.purple:hover,.pink:hover{transform:none}}
 
 
+
 .photo-fallback-layer{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#edf4ff,#f7edff);font-size:48px;z-index:0}.photo-fallback-layer span{filter:drop-shadow(0 10px 12px rgba(50,30,100,.18));animation:tinyFloat 2.8s ease-in-out infinite}
 .photo-art .service-photo{position:relative;z-index:1}.photo-art .photo-vignette,.photo-art .photo-shine,.photo-art .photo-badge{z-index:3}.photo-art.photo-fallback .service-photo{display:none}
 
@@ -1024,47 +1025,92 @@ async function loadManagerPanel(){
  }
 }
 
+/* ============================================================
+   ✅ UPDATED FUNCTION — DIRECT UPDATE (NO TRANSACTION)
+   ============================================================ */
 async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason){
- if(!IS_MANAGER){toast("Manager access is restricted");return}
- if(!firestore){toast("Firestore is not available");return}
- const note = newStatus === "Confirmed" ? "Booking confirmed by manager." : `Booking rejected: ${reason || 'No reason provided'}`;
- try{
-  const ref=firestore.collection("users").doc(uidValue);
-  await firestore.runTransaction(async tx=>{
-   const snap=await tx.get(ref);
-   if(!snap.exists)throw new Error("Customer record not found");
-   const data=snap.data()||{};
-   const bookings=Array.isArray(data.bookings)?data.bookings.map(b=>{
-    if(b.id!==bookingId)return b;
-    return {...b,status:newStatus,managerNote:note,rejectionReason: newStatus === "Rejected" ? (reason || "No reason provided") : undefined,managerUpdatedAt:new Date().toISOString(),managerUpdatedBy:"sangamdialservice@gmail.com"};
-   }):[];
-   const target=bookings.find(b=>b.id===bookingId);
-   if(!target)throw new Error("Booking not found");
-   const notifications=Array.isArray(data.notifications)?data.notifications.slice():[];
-   const s=service(target.serviceId);
-   notifications.push({
-    id:"N_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
-    title:newStatus==="Confirmed"?"Booking Confirmed":"Booking Rejected",
-    text:newStatus==="Confirmed"
-      ?`${s.name} booking ${target.id} has been confirmed by the manager.`
-      :`${s.name} booking ${target.id} was rejected. Reason: ${reason || 'Not specified'}`,
-    createdAt:new Date().toISOString(),
-    read:false,
-    bookingId:target.id
-   });
-   tx.set(ref,{
-    bookings,
-    notifications,
-    updatedAt:new Date().toISOString(),
-    managerLastAction:{bookingId:target.id,status:newStatus,at:new Date().toISOString(),by:"sangamdialservice@gmail.com"}
-   },{merge:true});
-  });
-  toast(newStatus==="Confirmed"?"Booking confirmed":"Booking rejected");
-  await loadManagerPanel();
- }catch(err){
-  console.error("Manager status update failed",err);
-  toast("Could not update booking. Check Firestore rules.");
- }
+  if(!IS_MANAGER){toast("Manager access is restricted");return}
+  if(!firestore){toast("Firestore is not available");return}
+  
+  const note = newStatus === "Confirmed" ? "Booking confirmed by manager." : `Booking rejected: ${reason || 'No reason provided'}`;
+  
+  try{
+    const ref = firestore.collection("users").doc(uidValue);
+    
+    // Direct read
+    const snap = await ref.get();
+    if(!snap.exists) {
+      toast("Customer record not found");
+      return;
+    }
+    
+    const data = snap.data() || {};
+    let bookings = Array.isArray(data.bookings) ? data.bookings : [];
+    let target = null;
+    
+    // Update the booking
+    bookings = bookings.map(b => {
+      if(b.id === bookingId) {
+        target = b;
+        const updated = {
+          ...b,
+          status: newStatus,
+          managerNote: note,
+          managerUpdatedAt: new Date().toISOString(),
+          managerUpdatedBy: "sangamdialservice@gmail.com"
+        };
+        
+        if(newStatus === "Rejected" && reason) {
+          updated.rejectionReason = reason;
+        } else if(newStatus === "Confirmed") {
+          delete updated.rejectionReason;
+        }
+        
+        return updated;
+      }
+      return b;
+    });
+    
+    if(!target) {
+      toast("Booking not found");
+      return;
+    }
+    
+    // Create notification
+    const s = service(target.serviceId);
+    const notifications = Array.isArray(data.notifications) ? data.notifications.slice() : [];
+    notifications.push({
+      id: "N_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
+      title: newStatus === "Confirmed" ? "✅ Booking Confirmed" : "❌ Booking Rejected",
+      text: newStatus === "Confirmed"
+        ? `${s.name} booking (${target.id}) has been confirmed by the manager.`
+        : `${s.name} booking (${target.id}) was rejected. Reason: ${reason || 'Not specified'}`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      bookingId: target.id
+    });
+    
+    // Direct set to Firestore
+    await ref.set({
+      bookings: bookings,
+      notifications: notifications,
+      updatedAt: new Date().toISOString(),
+      managerLastAction: {
+        bookingId: target.id,
+        status: newStatus,
+        at: new Date().toISOString(),
+        by: "sangamdialservice@gmail.com"
+      }
+    }, { merge: true });
+    
+    toast(newStatus === "Confirmed" ? "✅ Booking confirmed successfully!" : "❌ Booking rejected");
+    await loadManagerPanel();
+    closeModal();
+    
+  } catch(err){
+    console.error("Manager status update failed", err);
+    toast("Error: " + (err.message || "Unknown error"));
+  }
 }
 
 function showRejectReasonModal(uidValue, bookingId){
