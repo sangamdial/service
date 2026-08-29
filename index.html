@@ -1549,11 +1549,13 @@ function initFirebaseAuth() {
  });
  firebaseAuth.onAuthStateChanged(async user => {
   if (user) {
+   AUTH_SIGNED_IN = true;
+   clearTimeout(splashTimer);
+   document.getElementById('authGate')?.classList.remove('show');
+   document.getElementById('authLoading')?.classList.add('hide');
    IS_MANAGER = user.email?.toLowerCase() === 'sangamdialservice@gmail.com';
    AUTH_UID = user.uid;
    if (IS_MANAGER && customerUserUnsubscribe) { customerUserUnsubscribe(); customerUserUnsubscribe=null; }
-   document.getElementById('authGate')?.classList.remove('show');
-   document.getElementById('authLoading')?.classList.add('hide');
    document.getElementById('app').style.display = 'block';
    // Load user data from Firestore
    try {
@@ -1604,6 +1606,7 @@ function initFirebaseAuth() {
     startPopularSlider();
    }
   } else {
+   AUTH_SIGNED_IN = false;
    AUTH_UID = null;
    IS_MANAGER = false;
    if (managerUsersUnsubscribe) { managerUsersUnsubscribe(); managerUsersUnsubscribe=null; }
@@ -1621,21 +1624,27 @@ function needsOnboarding() {
 // --- START APP ---
 const SPLASH_MIN_DURATION = 8000; // 8 seconds
 let splashStartedAt = Date.now();
+let splashTimer = null;
+let AUTH_SIGNED_IN = false;
 
 function hideSplashAfterMinDuration() {
   const elapsed = Date.now() - splashStartedAt;
   const wait = Math.max(0, SPLASH_MIN_DURATION - elapsed);
-  setTimeout(() => {
+  clearTimeout(splashTimer);
+  splashTimer = setTimeout(() => {
     const loading = document.getElementById('authLoading');
-    const gate = document.getElementById('authGate');
     if (loading) loading.classList.add('hide');
-    if (gate) gate.classList.add('show');
+    // IMPORTANT: never show the login gate after a successful login.
+    if (!AUTH_SIGNED_IN) {
+      const gate = document.getElementById('authGate');
+      if (gate) gate.classList.add('show');
+    }
   }, wait);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
  document.getElementById('authLoading')?.classList.remove('hide');
-  document.getElementById('authGate')?.classList.add('show');
+  document.getElementById('authGate')?.classList.remove('show');
  initFirebaseAuth();
  // Keep the splash visible for the full 8 seconds, then reveal login/app.
  hideSplashAfterMinDuration();
