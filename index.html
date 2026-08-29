@@ -341,11 +341,13 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .rejection-reason strong{color:#8a2a2a}
 .notif-bell{position:relative}
 .notif-badge{position:absolute;top:-6px;right:-8px;background:#e3315c;color:#fff;border-radius:99px;font-size:9px;font-weight:800;min-width:18px;text-align:center;line-height:16px;padding:0 5px}
-.notif-card{padding:14px;border-radius:16px;background:#f9f9ff;border:1px solid #ececf3;margin-bottom:10px}
+.notif-card{padding:14px;border-radius:16px;background:#f9f9ff;border:1px solid #ececf3;margin-bottom:10px;position:relative}
 .notif-card.unread{background:#f2edff;border-left:4px solid #7132d8}
 .notif-title{font-weight:800;font-size:13px}
 .notif-text{font-size:12px;color:#555;margin:4px 0 6px}
 .notif-time{font-size:9px;color:#999}
+.notif-delete-btn{position:absolute;top:10px;right:10px;background:transparent;border:0;font-size:16px;color:#999;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s}
+.notif-delete-btn:hover{background:#fee;color:#c0392b}
 .report-item{padding:12px;border-radius:14px;background:#fafafe;border:1px solid #eee;margin-bottom:8px}
 .report-item .subj{font-weight:800;font-size:13px}
 .report-item .msg{font-size:12px;color:#555;margin:4px 0}
@@ -357,13 +359,10 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .status.pending{background:#fff3d6;color:#b8860b}
 .status.confirmed{background:#e0f7e9;color:#0b9b59}
 .status.rejected{background:#ffe5e5;color:#c0392b}
-
-.auth-google{
- position:relative;width:100%;height:56px;border-radius:17px;background:linear-gradient(110deg,#fff,#fbf8ff,#fff);
- border:1px solid rgba(113,48,220,.18);color:#24242d;font-weight:950;display:flex;align-items:center;justify-content:center;gap:11px;
- box-shadow:0 10px 24px rgba(61,35,130,.10),inset 0 1px 0 #fff;cursor:pointer;overflow:hidden;isolation:isolate;
- transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease,border-color .28s ease;
-}
+.booking-delete-btn{position:absolute;top:12px;right:12px;background:transparent;border:0;font-size:16px;color:#999;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;z-index:5}
+.booking-delete-btn:hover{background:#fee;color:#c0392b}
+.booking-card{position:relative}
+.auth-google{position:relative;width:100%;height:56px;border-radius:17px;background:linear-gradient(110deg,#fff,#fbf8ff,#fff);border:1px solid rgba(113,48,220,.18);color:#24242d;font-weight:950;display:flex;align-items:center;justify-content:center;gap:11px;box-shadow:0 10px 24px rgba(61,35,130,.10),inset 0 1px 0 #fff;cursor:pointer;overflow:hidden;isolation:isolate;transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease,border-color .28s ease}
 .auth-google::before{content:"";position:absolute;inset:-2px;background:conic-gradient(from 0deg,transparent 0 18%,rgba(255,79,134,.45) 26%,transparent 34% 55%,rgba(109,53,223,.45) 64%,transparent 72% 100%);animation:loginBorderSpin 4.5s linear infinite;z-index:-2}
 .auth-google::after{content:"";position:absolute;inset:1px;border-radius:16px;background:linear-gradient(110deg,#fff,#fbf9ff,#fff);z-index:-1}
 .auth-google:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 17px 34px rgba(78,39,155,.18),0 0 0 5px rgba(113,48,220,.05);border-color:rgba(113,48,220,.3)}
@@ -374,9 +373,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .auth-google:hover .login-arrow{transform:translateX(4px) rotate(-5deg)}
 @keyframes loginBorderSpin{to{transform:rotate(360deg)}}@keyframes googlePulse{0%{transform:scale(.8);opacity:.8}100%{transform:scale(1.35);opacity:0}}
 .report-card{transition:transform .22s ease,box-shadow .22s ease}.report-card:hover{transform:translateY(-3px);box-shadow:0 15px 32px rgba(50,35,100,.10)}
-
 .brand-icon{width:22px;height:22px;display:inline-block;flex:0 0 auto;vertical-align:middle}.google-icon{width:24px;height:24px}.whatsapp-icon{width:20px;height:20px}.auth-google .google-g{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#fff;box-shadow:0 5px 13px rgba(30,30,70,.12);position:relative;z-index:2}.auth-google .google-g .google-icon{width:24px;height:24px}.wa-action{display:inline-flex;align-items:center;justify-content:center;gap:7px}.wa-action .whatsapp-icon{color:#25D366}.whatsapp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px}.whatsapp-btn .whatsapp-icon{color:#25D366}
-/* Advanced cinematic splash animation — splash screen only */
 .auth-loading{background:radial-gradient(circle at 50% 44%,rgba(139,75,232,.30),transparent 25%),radial-gradient(circle at 18% 18%,rgba(255,79,145,.22),transparent 30%),radial-gradient(circle at 82% 78%,rgba(67,196,255,.20),transparent 32%),linear-gradient(145deg,#080719,#17103b 48%,#07172f);perspective:1000px}
 .auth-loading::before,.auth-loading::after{display:none}
 .advanced-splash{width:min(94vw,500px);animation:advancedEntrance 1.5s cubic-bezier(.16,1,.3,1) both}
@@ -416,6 +413,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 </head>
 <body>
 
+<!-- SPLASH SCREEN -->
 <div id="authLoading" class="auth-loading">
  <div class="splash-stars" aria-hidden="true"><i style="--i:0;--x:0;--y:0"></i><i style="--i:1;--x:37;--y:61"></i><i style="--i:2;--x:74;--y:22"></i><i style="--i:3;--x:11;--y:83"></i><i style="--i:4;--x:48;--y:44"></i><i style="--i:5;--x:85;--y:5"></i><i style="--i:6;--x:22;--y:66"></i><i style="--i:7;--x:59;--y:27"></i><i style="--i:8;--x:96;--y:88"></i><i style="--i:9;--x:33;--y:49"></i><i style="--i:10;--x:70;--y:10"></i><i style="--i:11;--x:7;--y:71"></i><i style="--i:12;--x:44;--y:32"></i><i style="--i:13;--x:81;--y:93"></i><i style="--i:14;--x:18;--y:54"></i><i style="--i:15;--x:55;--y:15"></i><i style="--i:16;--x:92;--y:76"></i><i style="--i:17;--x:29;--y:37"></i><i style="--i:18;--x:66;--y:98"></i><i style="--i:19;--x:3;--y:59"></i><i style="--i:20;--x:40;--y:20"></i><i style="--i:21;--x:77;--y:81"></i><i style="--i:22;--x:14;--y:42"></i><i style="--i:23;--x:51;--y:3"></i><i style="--i:24;--x:88;--y:64"></i><i style="--i:25;--x:25;--y:25"></i><i style="--i:26;--x:62;--y:86"></i><i style="--i:27;--x:99;--y:47"></i></div>
  <div class="splash-orbit orbit-a"><span>⚡</span></div>
@@ -450,6 +448,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
  </div>
 </div>
 
+<!-- AUTH GATE -->
 <div id="authGate" class="auth-gate show">
  <div class="auth-shell">
   <div class="auth-mobile">
@@ -475,6 +474,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
  </div>
 </div>
 
+<!-- APP -->
 <div id="app" class="app"></div>
 <div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
 <div id="toast" class="toast"></div>
@@ -503,6 +503,7 @@ let firebaseApp = null, firebaseAuth = null, firestore = null;
 let managerUsersUnsubscribe = null;
 let customerUserUnsubscribe = null;
 let notificationCleanupTimer = null;
+let authResolve = null;
 
 // --- CONSTANTS ---
 const SERVICES = [
@@ -566,21 +567,6 @@ function cleanupExpiredLocalData() {
   DB.support = Array.isArray(DB.support) ? DB.support.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now) : [];
   DB.notifications = Array.isArray(DB.notifications) ? DB.notifications.filter(n => !notificationDeleteAt(n) || notificationDeleteAt(n) > now) : [];
   saveState();
-}
-function reportCountdownText(r) {
-  const expiresAt = reportDeleteAt(r), diff = expiresAt - Date.now();
-  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
-  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000);
-  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
-  return `Will be deleted in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
-}
-function notificationCountdownText(n) {
-  const expiresAt = notificationDeleteAt(n), diff = expiresAt - Date.now();
-  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
-  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000), mins = Math.floor((diff%3600000)/60000);
-  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
-  if (hours > 0) return `Will be deleted in ${hours} hour${hours===1?'':'s'}`;
-  return `Will be deleted in ${Math.max(1,mins)} min`;
 }
 function bookingCountdownText(b) {
   const expiresAt = bookingDeleteAt(b), diff = expiresAt - Date.now();
@@ -668,38 +654,173 @@ async function signOutUser() {
  } catch(err) { console.error(err); toast('Sign out failed.'); }
 }
 
-// --- NOTIFICATIONS ---
-function sendBrowserNotification(title, body, bookingId) {
- if (!('Notification' in window) || Notification.permission !== 'granted') return;
- const notification = new Notification(title, {
-  body: body,
-  icon: 'https://img.icons8.com/color/96/000000/service.png',
-  tag: bookingId || 'booking',
-  requireInteraction: true
- });
- notification.onclick = function() {
-  window.focus();
-  if (route.page !== 'manager' && IS_MANAGER) go('manager');
-  else if (route.page !== 'bookings') go('bookings');
-  notification.close();
- };
- setTimeout(() => notification.close(), 15000);
+// --- DELETE FUNCTIONS (PERMANENT FROM ALL LOCATIONS) ---
+
+// Delete a booking permanently from both local and Firestore
+async function deleteBookingPermanent(bookingId) {
+  if (!bookingId) { toast('No booking specified'); return; }
+  
+  // Find the booking
+  const bookingIndex = DB.bookings.findIndex(b => b.id === bookingId);
+  if (bookingIndex === -1) { toast('Booking not found'); return; }
+  
+  const booking = DB.bookings[bookingIndex];
+  const serviceName = service(booking?.serviceId)?.name || 'Service';
+  
+  // Confirm deletion
+  if (!confirm(`Delete booking ${bookingId} (${serviceName}) permanently from ALL locations?\n\nThis action cannot be undone.`)) return;
+  
+  try {
+    // 1. Remove from local DB
+    DB.bookings.splice(bookingIndex, 1);
+    
+    // 2. Remove any related notifications
+    DB.notifications = DB.notifications.filter(n => n.bookingId !== bookingId);
+    
+    // 3. Save local state
+    saveState();
+    
+    // 4. Remove from Firestore if user is signed in
+    if (AUTH_UID && firestore) {
+      const userRef = firestore.collection('users').doc(AUTH_UID);
+      const snap = await userRef.get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        let updatedBookings = (Array.isArray(data.bookings) ? data.bookings : []).filter(b => b.id !== bookingId);
+        let updatedNotifications = (Array.isArray(data.notifications) ? data.notifications : []).filter(n => n.bookingId !== bookingId);
+        
+        await userRef.set({
+          bookings: updatedBookings,
+          notifications: updatedNotifications,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    }
+    
+    // 5. Also remove from manager cache if present
+    MANAGER_BOOKINGS_CACHE = MANAGER_BOOKINGS_CACHE.filter(b => b.id !== bookingId);
+    
+    toast(`✅ Booking ${bookingId} deleted permanently`);
+    updateAllBadges();
+    render();
+    closeModal();
+  } catch(err) {
+    console.error('Error deleting booking:', err);
+    toast('❌ Failed to delete booking from cloud: ' + (err.message || 'Unknown error'));
+  }
 }
 
-function sendWhatsAppToCustomer(phone, message) {
- if (!phone) return;
- const cleanPhone = phone.replace(/[^0-9]/g, '');
- if (cleanPhone.length < 10) return;
- window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+// Delete a notification permanently from both local and Firestore
+async function deleteNotificationPermanent(notificationId) {
+  if (!notificationId) { toast('No notification specified'); return; }
+  
+  const notifIndex = DB.notifications.findIndex(n => n.id === notificationId);
+  if (notifIndex === -1) { toast('Notification not found'); return; }
+  
+  try {
+    // 1. Remove from local DB
+    DB.notifications.splice(notifIndex, 1);
+    saveState();
+    
+    // 2. Remove from Firestore if user is signed in
+    if (AUTH_UID && firestore) {
+      const userRef = firestore.collection('users').doc(AUTH_UID);
+      const snap = await userRef.get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        let updatedNotifications = (Array.isArray(data.notifications) ? data.notifications : []).filter(n => n.id !== notificationId);
+        await userRef.set({
+          notifications: updatedNotifications,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    }
+    
+    toast('✅ Notification deleted permanently');
+    updateAllBadges();
+    render();
+    closeModal();
+  } catch(err) {
+    console.error('Error deleting notification:', err);
+    toast('❌ Failed to delete notification from cloud');
+  }
 }
 
-function getCustomerWhatsAppMessage(b, status, reason) {
- const s = service(b.serviceId);
- if (status === 'Confirmed') {
-  return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
- } else {
-  return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
- }
+// Delete a support report permanently from both local and Firestore
+async function deleteReportPermanent(reportId) {
+  if (!reportId) { toast('No report specified'); return; }
+  
+  const reportIndex = DB.support.findIndex(r => r.id === reportId);
+  if (reportIndex === -1) { toast('Report not found'); return; }
+  
+  try {
+    // 1. Remove from local DB
+    DB.support.splice(reportIndex, 1);
+    saveState();
+    
+    // 2. Remove from Firestore if user is signed in
+    if (AUTH_UID && firestore) {
+      const userRef = firestore.collection('users').doc(AUTH_UID);
+      const snap = await userRef.get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        let updatedSupport = (Array.isArray(data.support) ? data.support : []).filter(r => r.id !== reportId);
+        await userRef.set({
+          support: updatedSupport,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    }
+    
+    toast('✅ Report deleted permanently');
+    render();
+    closeModal();
+  } catch(err) {
+    console.error('Error deleting report:', err);
+    toast('❌ Failed to delete report from cloud');
+  }
+}
+
+// Manager: Delete a customer's booking permanently
+async function deleteCustomerBookingPermanently(uidValue, bookingId) {
+  if (!IS_MANAGER) { toast('Manager access required'); return; }
+  if (!uidValue || !bookingId) { toast('Missing information'); return; }
+  
+  if (!confirm('Delete this booking permanently from the customer\'s account and all locations? This cannot be undone.')) return;
+  
+  try {
+    if (!firestore) { toast('Firestore not available'); return; }
+    
+    const userRef = firestore.collection('users').doc(uidValue);
+    const snap = await userRef.get();
+    if (!snap.exists) { toast('Customer not found'); return; }
+    
+    const data = snap.data() || {};
+    let updatedBookings = (Array.isArray(data.bookings) ? data.bookings : []).filter(b => b.id !== bookingId);
+    let updatedNotifications = (Array.isArray(data.notifications) ? data.notifications : []).filter(n => n.bookingId !== bookingId);
+    
+    await userRef.set({
+      bookings: updatedBookings,
+      notifications: updatedNotifications,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    
+    // Also remove from local cache
+    MANAGER_BOOKINGS_CACHE = MANAGER_BOOKINGS_CACHE.filter(b => b.id !== bookingId);
+    // If this is the current user's booking, remove from local DB too
+    if (AUTH_UID === uidValue) {
+      DB.bookings = DB.bookings.filter(b => b.id !== bookingId);
+      DB.notifications = DB.notifications.filter(n => n.bookingId !== bookingId);
+      saveState();
+    }
+    
+    toast('✅ Customer booking deleted permanently');
+    await loadManagerPanel();
+    closeModal();
+  } catch(err) {
+    console.error('Error deleting customer booking:', err);
+    toast('❌ Failed to delete: ' + (err.message || 'Unknown error'));
+  }
 }
 
 // --- MANAGER FUNCTIONS ---
@@ -741,7 +862,6 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
       createdAt, expiresAt, read: false, bookingId: target.id, type: 'status_update'
     });
 
-    // Source of truth: update the customer's Firestore document.
     await ref.set({
       bookings,
       notifications,
@@ -794,12 +914,14 @@ function confirmRejectBooking(uidValue, bookingId) {
  updateBookingStatusManager(uidValue, bookingId, 'Rejected', reason);
 }
 function managerActionButtons(b) {
- if (b.status === 'Confirmed') return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#effaf3;color:#187844;font-size:11px;font-weight:800">✓ Confirmed by Manager</div>`;
- if (b.status === 'Rejected') return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#fff0f2;color:#b4233c;font-size:11px;font-weight:800">✕ Rejected by Manager${b.rejectionReason ? `<br><span style="font-weight:400">Reason: ${esc(b.rejectionReason)}</span>` : ''}</div>`;
- return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+  const deleteBtn = `<button class="full" style="background:#d43b3b;color:#fff;margin-top:6px;font-size:11px;padding:8px" onclick="event.stopPropagation();deleteCustomerBookingPermanently('${b._uid}','${b.id}')">🗑️ Delete Permanently</button>`;
+  
+  if (b.status === 'Confirmed') return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#effaf3;color:#187844;font-size:11px;font-weight:800">✓ Confirmed by Manager</div>${deleteBtn}`;
+  if (b.status === 'Rejected') return `<div style="margin-top:10px;padding:10px;border-radius:12px;background:#fff0f2;color:#b4233c;font-size:11px;font-weight:800">✕ Rejected by Manager${b.rejectionReason ? `<br><span style="font-weight:400">Reason: ${esc(b.rejectionReason)}</span>` : ''}</div>${deleteBtn}`;
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
   <button class="full" style="background:#17844b;color:#fff" onclick="event.stopPropagation();updateBookingStatusManager('${b._uid}','${b.id}','Confirmed','')">✓ Confirm</button>
   <button class="full pink" onclick="event.stopPropagation();showRejectReasonModal('${b._uid}','${b.id}')">✕ Reject</button>
- </div>`;
+  </div>${deleteBtn}`;
 }
 
 function switchManagerTab(tab) {
@@ -857,7 +979,8 @@ function renderManagerBookings(rows) {
    return;
   }
   box.innerHTML = reps.map(r => `
-   <div class="card report-card" style="padding:15px;margin-bottom:10px;border-left:4px solid #7132d8">
+   <div class="card report-card" style="padding:15px;margin-bottom:10px;border-left:4px solid #7132d8;position:relative">
+    <button class="notif-delete-btn" onclick="event.stopPropagation();deleteReportPermanent('${r.id}')" title="Delete report permanently">✕</button>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
      <div style="font-weight:900;font-size:14px">${esc(r.subject)}</div>
      <span style="font-size:9px;font-weight:900;padding:5px 8px;border-radius:99px;background:#f1eaff;color:#7132d8;white-space:nowrap">${esc(r.status||'Open')}</span>
@@ -885,7 +1008,8 @@ function renderManagerBookings(rows) {
  document.getElementById('countRejected').textContent = rejected;
  document.getElementById('countReports').textContent = MANAGER_REPORTS_CACHE.length;
  if (!filtered.length) { box.innerHTML = '<div class="empty"><div class="big">📦</div><h3>No bookings in this category</h3><p>All bookings appear here for manager review.</p></div>'; return; }
- box.innerHTML = filtered.map(b => `<div class="card booking-card" style="margin-bottom:10px">
+ box.innerHTML = filtered.map(b => `<div class="card booking-card" style="margin-bottom:10px;position:relative">
+  <button class="booking-delete-btn" onclick="event.stopPropagation();deleteCustomerBookingPermanently('${b._uid}','${b.id}')" title="Delete booking permanently">✕</button>
   <div style="display:flex;gap:11px;align-items:flex-start">
    <div class="mini-service">${service(b.serviceId).icon}</div>
    <div style="flex:1;min-width:0">
@@ -914,7 +1038,8 @@ function filterManagerBookings(q) {
   const box = document.getElementById('managerBookings');
   if (!box) return;
   box.innerHTML = reps.length ? reps.map(r => `
-   <div class="card report-card" style="padding:15px;margin-bottom:10px;border-left:4px solid #7132d8">
+   <div class="card report-card" style="padding:15px;margin-bottom:10px;border-left:4px solid #7132d8;position:relative">
+    <button class="notif-delete-btn" onclick="event.stopPropagation();deleteReportPermanent('${r.id}')" title="Delete report permanently">✕</button>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
      <div style="font-weight:900;font-size:14px">${esc(r.subject)}</div>
      <span style="font-size:9px;font-weight:900;padding:5px 8px;border-radius:99px;background:#f1eaff;color:#7132d8">${esc(r.status||'Open')}</span>
@@ -973,7 +1098,9 @@ function serviceArt(s, mini = false) {
 }
 function bookingMini(b) {
  const s = service(b.serviceId);
- return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
+ return `<div class="card booking-card" style="position:relative" onclick="openBooking('${b.id}')">
+  <button class="booking-delete-btn" onclick="event.stopPropagation();deleteBookingPermanent('${b.id}')" title="Delete booking permanently">✕</button>
+  <div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
 }
 
 function home() {
@@ -1088,7 +1215,7 @@ function bookingsPage() {
  const bs = (DB.bookings || []).slice().reverse();
  return `<div class="screen">${header('My Bookings')}
   <div class="tabs"><button class="tab active">All</button><button class="tab">Upcoming</button><button class="tab">Completed</button></div>
-  <div class="booking">${bs.length ? bs.map(b => `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span>${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}<div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString('en-IN')}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join('') : `<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
+  <div class="booking">${bs.length ? bs.map(b => `<div class="card booking-card" style="position:relative" onclick="openBooking('${b.id}')"><button class="booking-delete-btn" onclick="event.stopPropagation();deleteBookingPermanent('${b.id}')" title="Delete booking permanently">✕</button><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span>${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}<div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString('en-IN')}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join('') : `<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
   ${bottom('bookings')}</div>`;
 }
 
@@ -1117,7 +1244,7 @@ function supportPage() {
    <div class="field"><label>Report / Message</label><textarea id="supportMessage" placeholder="Tell us what happened..."></textarea></div>
    <button class="full purple" onclick="sendSupport()"><span class="whatsapp-btn"><svg class="brand-icon whatsapp-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16.02 3.2A12.78 12.78 0 0 0 5.1 22.64L3.2 28.8l6.34-1.87A12.8 12.8 0 1 0 16.02 3.2Zm0 23.27a10.47 10.47 0 0 1-5.34-1.46l-.38-.23-3.76 1.11 1.13-3.66-.25-.4a10.48 10.48 0 1 1 8.6 4.64Zm5.75-7.85c-.31-.16-1.82-.9-2.1-1s-.49-.16-.7.16-.8 1-.98 1.2-.36.24-.67.08a8.58 8.58 0 0 1-2.53-1.56 9.48 9.48 0 0 1-1.75-2.17c-.18-.31-.02-.48.14-.64.14-.14.31-.36.47-.54.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.7-1.69-.96-2.31-.25-.6-.5-.52-.69-.53h-.59c-.21 0-.55.08-.84.39-.29.31-1.1 1.07-1.1 2.61s1.13 3.03 1.29 3.24c.16.21 2.22 3.39 5.38 4.76.75.32 1.34.51 1.8.65.76.24 1.45.21 2 .13.61-.09 1.82-.74 2.08-1.45.26-.71.26-1.32.18-1.45-.08-.13-.29-.21-.6-.37Z"/></svg> Send Report on WhatsApp &nbsp; →</span></button>
   </div>
-  ${(DB.support||[]).slice().reverse().map(x => `<div class="card" style="padding:14px;margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(x.subject)}</b><span class="status">${esc(x.status||'Open')}</span></div><div style="font-size:11px;color:#777;margin-top:5px">${esc(x.message)}</div><div style="font-size:9px;color:#aaa;margin-top:9px">${new Date(x.createdAt).toLocaleString('en-IN')}</div></div>`).join('')}
+  ${(DB.support||[]).slice().reverse().map(x => `<div class="card" style="padding:14px;margin-bottom:9px;position:relative"><button class="notif-delete-btn" onclick="event.stopPropagation();deleteReportPermanent('${x.id}')" title="Delete report permanently">✕</button><div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(x.subject)}</b><span class="status">${esc(x.status||'Open')}</span></div><div style="font-size:11px;color:#777;margin-top:5px">${esc(x.message)}</div><div style="font-size:9px;color:#aaa;margin-top:9px">${new Date(x.createdAt).toLocaleString('en-IN')}</div></div>`).join('')}
  </div>${bottom('support')}</div>`;
 }
 
@@ -1236,7 +1363,6 @@ async function confirmBooking(serviceId) {
   DB.notifications = DB.notifications.filter(n => notificationDeleteAt(n) > Date.now());
 
   try {
-    // IMPORTANT: persist the new booking to Firestore immediately so the manager sees it live.
     await firestore.collection('users').doc(AUTH_UID).set({
       uid:AUTH_UID, user:{...DB.user}, addresses:DB.addresses||[], bookings:DB.bookings,
       notifications:DB.notifications, settings:DB.settings||{notifications:true}, updatedAt:notifCreatedAt
@@ -1323,6 +1449,7 @@ function openNotifications() {
   const ns = (DB.notifications||[]).filter(n => !notificationDeleteAt(n) || notificationDeleteAt(n) > Date.now()).slice().reverse();
   document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>🔔 Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${
     ns.length ? ns.map(n => `<div class="notif-card ${n.read?'':'unread'}">
+      <button class="notif-delete-btn" onclick="event.stopPropagation();deleteNotificationPermanent('${n.id}')" title="Delete notification permanently">✕</button>
       <div class="notif-title">${esc(n.title)}</div>
       <div class="notif-text">${esc(n.text)}</div>
       <div class="notif-time">${new Date(n.createdAt).toLocaleString('en-IN')}</div>
@@ -1414,6 +1541,25 @@ function clearAllData() {
  document.getElementById('modal').classList.add('open');
 }
 function callSupport() { window.location.href = `tel:${BUSINESS_PHONE}`; }
+function openGoogleMap() {
+ const a = (DB.addresses||[])[0];
+ if (a?.mapUrl) { window.open(a.mapUrl, '_blank', 'noopener'); } else { toast('No GPS location saved'); }
+}
+function reportCountdownText(r) {
+  const expiresAt = reportDeleteAt(r), diff = expiresAt - Date.now();
+  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000);
+  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
+  return `Will be deleted in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
+}
+function notificationCountdownText(n) {
+  const expiresAt = notificationDeleteAt(n), diff = expiresAt - Date.now();
+  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000), mins = Math.floor((diff%3600000)/60000);
+  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
+  if (hours > 0) return `Will be deleted in ${hours} hour${hours===1?'':'s'}`;
+  return `Will be deleted in ${Math.max(1,mins)} min`;
+}
 async function sendSupport() {
  const subject = document.getElementById('supportSubject').value.trim(), message = document.getElementById('supportMessage').value.trim();
  if (!subject || !message) { toast('Please fill subject and message'); return; }
@@ -1484,6 +1630,9 @@ function completeOnboarding() {
  toast('Profile saved successfully');
 }
 
+// --- FIREBASE AUTH LISTENER ---
+let authInitialized = false;
+
 function startCustomerRealtimeListener() {
   if (!firestore || !AUTH_UID || IS_MANAGER || customerUserUnsubscribe) return;
   customerUserUnsubscribe = firestore.collection('users').doc(AUTH_UID).onSnapshot(snap => {
@@ -1518,6 +1667,39 @@ function startNotificationCleanupTimer() {
     }
   },60000);
 }
+function sendBrowserNotification(title, body, bookingId) {
+ if (!('Notification' in window) || Notification.permission !== 'granted') return;
+ const notification = new Notification(title, {
+  body: body,
+  icon: 'https://img.icons8.com/color/96/000000/service.png',
+  tag: bookingId || 'booking',
+  requireInteraction: true
+ });
+ notification.onclick = function() {
+  window.focus();
+  if (route.page !== 'manager' && IS_MANAGER) go('manager');
+  else if (route.page !== 'bookings') go('bookings');
+  notification.close();
+ };
+ setTimeout(() => notification.close(), 15000);
+}
+function sendWhatsAppToCustomer(phone, message) {
+ if (!phone) return;
+ const cleanPhone = phone.replace(/[^0-9]/g, '');
+ if (cleanPhone.length < 10) return;
+ window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+}
+function getCustomerWhatsAppMessage(b, status, reason) {
+ const s = service(b.serviceId);
+ if (status === 'Confirmed') {
+  return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
+ } else {
+  return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
+ }
+}
+function needsOnboarding() {
+ return !(DB.user?.profileComplete && DB.user.name?.trim() && DB.user.phone?.trim() && (DB.addresses||[])[0]?.address?.trim());
+}
 
 function render() {
  const app = document.getElementById('app');
@@ -1542,11 +1724,13 @@ function initFirebaseAuth() {
   showAuthError('Firebase initialization failed. Check your Firebase config.');
   return;
  }
+ 
  firebaseAuth.getRedirectResult().catch(err => {
   console.error('Firebase redirect result error', err);
   showAuthError(firebaseFriendlyError(err));
   document.getElementById('authLoading')?.classList.add('hide');
  });
+ 
  firebaseAuth.onAuthStateChanged(async user => {
   if (user) {
    IS_MANAGER = user.email?.toLowerCase() === 'sangamdialservice@gmail.com';
@@ -1555,7 +1739,7 @@ function initFirebaseAuth() {
    document.getElementById('authGate')?.classList.remove('show');
    document.getElementById('authLoading')?.classList.add('hide');
    document.getElementById('app').style.display = 'block';
-   // Load user data from Firestore
+   
    try {
     const ref = firestore.collection('users').doc(user.uid);
     const snap = await ref.get();
@@ -1566,17 +1750,16 @@ function initFirebaseAuth() {
      if (data.bookings) DB.bookings = data.bookings;
      if (data.notifications) DB.notifications = data.notifications;
      if (data.support) DB.support = data.support;
-      cleanupExpiredLocalData();
-      const liveBookings = (DB.bookings || []).filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > Date.now());
-      const liveSupport = (DB.support || []).filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > Date.now());
-      if (liveBookings.length !== (data.bookings || []).length || liveSupport.length !== (data.support || []).length) {
-       await ref.set({ bookings: liveBookings, support: liveSupport, updatedAt: new Date().toISOString() }, { merge: true });
-       DB.bookings = liveBookings;
-       DB.support = liveSupport;
-      }
-      saveState();
+     cleanupExpiredLocalData();
+     const liveBookings = (DB.bookings || []).filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > Date.now());
+     const liveSupport = (DB.support || []).filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > Date.now());
+     if (liveBookings.length !== (data.bookings || []).length || liveSupport.length !== (data.support || []).length) {
+      await ref.set({ bookings: liveBookings, support: liveSupport, updatedAt: new Date().toISOString() }, { merge: true });
+      DB.bookings = liveBookings;
+      DB.support = liveSupport;
+     }
+     saveState();
     } else {
-     // Create new user document
      await ref.set({
       uid: user.uid,
       user: DB.user,
@@ -1611,34 +1794,35 @@ function initFirebaseAuth() {
    clearInterval(notificationCleanupTimer); notificationCleanupTimer=null;
    document.getElementById('app').style.display = 'none';
    document.getElementById('authLoading')?.classList.add('hide');
+   // Make sure auth gate is shown if not logged in
+   document.getElementById('authGate')?.classList.add('show');
   }
  });
 }
-function needsOnboarding() {
- return !(DB.user?.profileComplete && DB.user.name?.trim() && DB.user.phone?.trim() && (DB.addresses||[])[0]?.address?.trim());
-}
 
 // --- START APP ---
-const SPLASH_MIN_DURATION = 8000; // 8 seconds
+const SPLASH_MIN_DURATION = 5000; // Reduced to 5 seconds for better UX
 let splashStartedAt = Date.now();
 
 function hideSplashAfterMinDuration() {
   const elapsed = Date.now() - splashStartedAt;
   const wait = Math.max(0, SPLASH_MIN_DURATION - elapsed);
   setTimeout(() => {
+    // Only hide splash if user is already authenticated
+    // If not, the auth state listener will handle it
     const loading = document.getElementById('authLoading');
-    const gate = document.getElementById('authGate');
-    if (loading) loading.classList.add('hide');
-    if (gate) gate.classList.add('show');
+    if (loading && !AUTH_UID) {
+      // If no user yet, keep splash or show auth gate
+      // The auth listener will hide it when user is detected
+    }
   }, wait);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
  document.getElementById('authLoading')?.classList.remove('hide');
-  document.getElementById('authGate')?.classList.add('show');
+ document.getElementById('authGate')?.classList.add('show');
  initFirebaseAuth();
- // Keep the splash visible for the full 8 seconds, then reveal login/app.
- hideSplashAfterMinDuration();
+ 
  // Modal click to close
  document.getElementById('modal').addEventListener('click', function(e) {
   if (e.target.id === 'modal') closeModal();
@@ -1647,6 +1831,13 @@ document.addEventListener('DOMContentLoaded', function() {
  document.getElementById('toast').addEventListener('click', function() {
   this.classList.remove('show');
  });
+ 
+ // Hide splash after minimum duration
+ setTimeout(() => {
+   const loading = document.getElementById('authLoading');
+   if (loading) loading.classList.add('hide');
+   // If not authenticated, auth gate is already shown
+ }, SPLASH_MIN_DURATION);
 });
 
 // --- Expose globals for inline onclick ---
@@ -1679,6 +1870,10 @@ window.updateBookingStatusManager = updateBookingStatusManager;
 window.showRejectReasonModal = showRejectReasonModal;
 window.confirmRejectBooking = confirmRejectBooking;
 window.completeOnboarding = completeOnboarding;
+window.deleteBookingPermanent = deleteBookingPermanent;
+window.deleteNotificationPermanent = deleteNotificationPermanent;
+window.deleteReportPermanent = deleteReportPermanent;
+window.deleteCustomerBookingPermanently = deleteCustomerBookingPermanently;
 
 console.log('✅ Sangam Dial Service loaded successfully!');
 </script>
