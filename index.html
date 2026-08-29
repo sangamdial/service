@@ -278,7 +278,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
   .compact-hello{margin-top:15px!important}
 }
 @keyframes drawerIn{from{transform:translateX(-100%);opacity:.7}to{transform:none;opacity:1}}
-.auth-gate{position:fixed;inset:0;z-index:1000;background:#e9eaf0;display:none;overflow:auto}
+.auth-gate{position:fixed;inset:0;z-index:1000;background:#e9eaf0;display:flex;align-items:center;justify-content:center;overflow:auto}
 .auth-gate.show{display:flex;align-items:center;justify-content:center}
 .auth-shell{width:100%;min-height:100%;display:flex;background:var(--bg)}
 .auth-mobile{width:min(100%,430px);min-height:100vh;margin:auto;background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column}
@@ -301,6 +301,8 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 }
 @media(max-width:899px){.auth-desktop{display:none}}
 .auth-loading{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#fff;background:radial-gradient(circle at 20% 18%,#ff7fb0 0,rgba(255,127,176,0) 30%),radial-gradient(circle at 82% 82%,#5ac9ff 0,rgba(90,201,255,0) 34%),linear-gradient(145deg,#100c2d,#281052 48%,#101c4a);animation:splashBg 12s ease-in-out infinite alternate}.auth-loading.hide{display:none}
+.auth-loading{animation:startupSplashFallback 8s ease forwards;animation-play-state:running;pointer-events:auto}
+@keyframes startupSplashFallback{0%,92%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}
 .auth-loading::before,.auth-loading::after{content:"";position:absolute;border-radius:50%;pointer-events:none;filter:blur(3px)}
 .auth-loading::before{width:320px;height:320px;left:-150px;top:12%;background:rgba(255,79,145,.18);animation:orbFloat 9s ease-in-out infinite}
 .auth-loading::after{width:360px;height:360px;right:-170px;bottom:7%;background:rgba(64,194,255,.16);animation:orbFloat 10s ease-in-out infinite reverse}
@@ -498,6 +500,9 @@ let popularIndex = 0;
 let popularTimer = null;
 let FIREBASE_READY = false;
 let firebaseApp = null, firebaseAuth = null, firestore = null;
+let managerUsersUnsubscribe = null;
+let customerUserUnsubscribe = null;
+let notificationCleanupTimer = null;
 
 // --- CONSTANTS ---
 const SERVICES = [
@@ -520,6 +525,7 @@ const BUSINESS_PHONE = "7859056418";
 const POPULAR_SERVICES = ["ac","tv","cctv","plumbing","washing","electrician"];
 const BOOKING_RETENTION_MS = 20*24*60*60*1000;
 const REPORT_RETENTION_MS = 20*24*60*60*1000;
+const NOTIFICATION_RETENTION_MS = 5*24*60*60*1000;
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -548,30 +554,41 @@ function toast(msg) { const el = document.getElementById('toast'); el.textConten
 function initials(name) { return (name || 'U').split(/\s+/).slice(0,2).map(x => x[0]).join('').toUpperCase(); }
 function bookingDeleteAt(b) { const created = new Date(b?.createdAt || 0).getTime(); return created > 0 ? created + BOOKING_RETENTION_MS : 0; }
 function reportDeleteAt(r) { const created = new Date(r?.createdAt || 0).getTime(); return created > 0 ? created + REPORT_RETENTION_MS : 0; }
-function cleanupExpiredLocalData() {
- const now = Date.now();
- DB.bookings = Array.isArray(DB.bookings) ? DB.bookings.filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > now) : [];
- DB.support = Array.isArray(DB.support) ? DB.support.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now) : [];
- DB.notifications = Array.isArray(DB.notifications) ? DB.notifications.filter(n => {
+function notificationDeleteAt(n) {
+  const explicit = new Date(n?.expiresAt || 0).getTime();
+  if (explicit > 0) return explicit;
   const created = new Date(n?.createdAt || 0).getTime();
-  return !created || created + REPORT_RETENTION_MS > now;
- }) : [];
- saveState();
+  return created > 0 ? created + NOTIFICATION_RETENTION_MS : 0;
+}
+function cleanupExpiredLocalData() {
+  const now = Date.now();
+  DB.bookings = Array.isArray(DB.bookings) ? DB.bookings.filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > now) : [];
+  DB.support = Array.isArray(DB.support) ? DB.support.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now) : [];
+  DB.notifications = Array.isArray(DB.notifications) ? DB.notifications.filter(n => !notificationDeleteAt(n) || notificationDeleteAt(n) > now) : [];
+  saveState();
 }
 function reportCountdownText(r) {
- const expiresAt = reportDeleteAt(r), diff = expiresAt - Date.now();
- if (!expiresAt || diff <= 0) return 'Will be deleted soon';
- const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000);
- if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
- return `Will be deleted in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
+  const expiresAt = reportDeleteAt(r), diff = expiresAt - Date.now();
+  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000);
+  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
+  return `Will be deleted in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
+}
+function notificationCountdownText(n) {
+  const expiresAt = notificationDeleteAt(n), diff = expiresAt - Date.now();
+  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000), mins = Math.floor((diff%3600000)/60000);
+  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
+  if (hours > 0) return `Will be deleted in ${hours} hour${hours===1?'':'s'}`;
+  return `Will be deleted in ${Math.max(1,mins)} min`;
 }
 function bookingCountdownText(b) {
- const expiresAt = bookingDeleteAt(b), diff = expiresAt - Date.now();
- if (!expiresAt || diff <= 0) return 'Will be deleted soon';
- const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000), mins = Math.floor((diff%3600000)/60000);
- if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
- if (hours > 0) return `Will be deleted in ${hours} hour${hours===1?'':'s'} ${mins} min`;
- return `Will be deleted in ${Math.max(1,mins)} min`;
+  const expiresAt = bookingDeleteAt(b), diff = expiresAt - Date.now();
+  if (!expiresAt || diff <= 0) return 'Will be deleted soon';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000), mins = Math.floor((diff%3600000)/60000);
+  if (days > 0) return `Will be deleted in ${days} day${days===1?'':'s'}`;
+  if (hours > 0) return `Will be deleted in ${hours} hour${hours===1?'':'s'} ${mins} min`;
+  return `Will be deleted in ${Math.max(1,mins)} min`;
 }
 function go(page, svc) { route = { page, service: svc }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); if (page === 'home') { setTimeout(() => { renderPopular(); startPopularSlider(); }, 60); } else { clearInterval(popularTimer); } }
 function closeModal() { document.getElementById('modal').classList.remove('open', 'menu-modal'); }
@@ -687,63 +704,79 @@ function getCustomerWhatsAppMessage(b, status, reason) {
 
 // --- MANAGER FUNCTIONS ---
 async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason) {
- if (!IS_MANAGER) { toast('Manager access is restricted'); return; }
- if (!firestore) { toast('Firestore is not available'); return; }
- const note = newStatus === 'Confirmed' ? 'Booking confirmed by manager.' : `Booking rejected: ${reason || 'No reason provided'}`;
- try {
-  const ref = firestore.collection('users').doc(uidValue);
-  const snap = await ref.get();
-  if (!snap.exists) { toast('Customer record not found'); return; }
-  const data = snap.data() || {};
-  let bookings = Array.isArray(data.bookings) ? data.bookings : [];
-  let target = null;
-  bookings = bookings.map(b => {
-   if (b.id === bookingId) {
-    target = b;
-    const updated = { ...b, status: newStatus, managerNote: note, managerUpdatedAt: new Date().toISOString(), managerUpdatedBy: 'sangamdialservice@gmail.com' };
-    if (newStatus === 'Rejected' && reason) updated.rejectionReason = reason;
-    else if (newStatus === 'Confirmed') delete updated.rejectionReason;
-    return updated;
-   }
-   return b;
-  });
-  if (!target) { toast('Booking not found'); return; }
-  const s = service(target.serviceId);
-  const notifications = Array.isArray(data.notifications) ? data.notifications.slice() : [];
-  const customerNotif = {
-   id: 'N_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-   title: newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected',
-   text: newStatus === 'Confirmed' ? `Your ${s.name} booking (${target.id}) has been CONFIRMED by the manager.` : `Your ${s.name} booking (${target.id}) has been REJECTED. Reason: ${reason || 'Not specified'}`,
-   createdAt: new Date().toISOString(),
-   read: false,
-   bookingId: target.id,
-   type: 'status_update'
-  };
-  notifications.push(customerNotif);
-  // Also add to manager's own notifications
-  DB.notifications.push({
-   id: 'N_M_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-   title: newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected',
-   text: `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`,
-   createdAt: new Date().toISOString(),
-   read: false,
-   bookingId: target.id,
-   type: 'manager_status_update'
-  });
-  saveState();
-  await ref.set({ bookings, notifications, updatedAt: new Date().toISOString(), managerLastAction: { bookingId: target.id, status: newStatus, at: new Date().toISOString(), by: 'sangamdialservice@gmail.com' } }, { merge: true });
-  toast(newStatus === 'Confirmed' ? '✅ Booking confirmed successfully!' : '❌ Booking rejected');
-  await loadManagerPanel();
-  closeModal();
-  sendBrowserNotification(newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected', `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`, target.id);
-  const customerPhone = target.phone || data.user?.phone || '';
-  if (customerPhone) {
-   const msg = getCustomerWhatsAppMessage(target, newStatus, reason);
-   sendWhatsAppToCustomer(customerPhone, msg);
-   toast('📤 WhatsApp message sent to customer');
+  if (!IS_MANAGER) { toast('Manager access is restricted'); return; }
+  if (!firestore) { toast('Firestore is not available'); return; }
+  const note = newStatus === 'Confirmed' ? 'Booking confirmed by manager.' : `Booking rejected: ${reason || 'No reason provided'}`;
+  try {
+    const ref = firestore.collection('users').doc(uidValue);
+    const snap = await ref.get();
+    if (!snap.exists) { toast('Customer record not found'); return; }
+    const data = snap.data() || {};
+    const oldBookings = Array.isArray(data.bookings) ? data.bookings : [];
+    let target = null;
+
+    const bookings = oldBookings.map(b => {
+      if (b.id !== bookingId) return b;
+      target = b;
+      const updated = { ...b, status: newStatus, managerNote: note, managerUpdatedAt: new Date().toISOString(), managerUpdatedBy: 'sangamdialservice@gmail.com' };
+      if (newStatus === 'Rejected') updated.rejectionReason = reason || 'Not specified';
+      else delete updated.rejectionReason;
+      return updated;
+    });
+    if (!target) { toast('Booking not found'); return; }
+
+    const s = service(target.serviceId);
+    const createdAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + NOTIFICATION_RETENTION_MS).toISOString();
+    const notifications = (Array.isArray(data.notifications) ? data.notifications : [])
+      .map(n => ({...n, expiresAt: n.expiresAt || new Date(new Date(n.createdAt || Date.now()).getTime()+NOTIFICATION_RETENTION_MS).toISOString()}))
+      .filter(n => notificationDeleteAt(n) > Date.now());
+
+    notifications.push({
+      id: 'N_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title: newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected',
+      text: newStatus === 'Confirmed'
+        ? `Your ${s.name} booking (${target.id}) has been CONFIRMED by the manager.`
+        : `Your ${s.name} booking (${target.id}) has been REJECTED. Reason: ${reason || 'Not specified'}`,
+      createdAt, expiresAt, read: false, bookingId: target.id, type: 'status_update'
+    });
+
+    // Source of truth: update the customer's Firestore document.
+    await ref.set({
+      bookings,
+      notifications,
+      updatedAt: createdAt,
+      managerLastAction: { bookingId: target.id, status: newStatus, at: createdAt, by: 'sangamdialservice@gmail.com' }
+    }, { merge: true });
+
+    DB.notifications = (DB.notifications || []).filter(n => notificationDeleteAt(n) > Date.now());
+    DB.notifications.push({
+      id: 'N_M_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title: newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected',
+      text: `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`,
+      createdAt, expiresAt, read: false, bookingId: target.id, type: 'manager_status_update'
+    });
+    saveState();
+
+    toast(newStatus === 'Confirmed' ? '✅ Booking confirmed successfully!' : '❌ Booking rejected');
+    await loadManagerPanel();
+    closeModal();
+    sendBrowserNotification(
+      newStatus === 'Confirmed' ? '✅ Booking Confirmed!' : '❌ Booking Rejected',
+      `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`,
+      target.id
+    );
+
+    const customerPhone = target.phone || data.user?.phone || '';
+    if (customerPhone) {
+      sendWhatsAppToCustomer(customerPhone, getCustomerWhatsAppMessage(target, newStatus, reason));
+      toast('📤 WhatsApp opened with customer message');
+    }
+    updateAllBadges();
+  } catch(err) {
+    console.error('Manager status update failed', err);
+    toast('Error: ' + (err.message || 'Unknown error'));
   }
-  updateAllBadges();
- } catch(err) { console.error('Manager status update failed', err); toast('Error: ' + (err.message || 'Unknown error')); }
 }
 
 function showRejectReasonModal(uidValue, bookingId) {
@@ -776,42 +809,40 @@ function switchManagerTab(tab) {
 }
 
 async function loadManagerPanel() {
- if (!IS_MANAGER) { toast('Manager access is restricted'); go('profile'); return; }
- const box = document.getElementById('managerBookings');
- if (!box) return;
- try {
-  const snap = await firestore.collection('users').get();
-  const rows = [], reports = [], cleanupWrites = [], now = Date.now();
+  if (!IS_MANAGER) { toast('Manager access is restricted'); go('profile'); return; }
+  const box = document.getElementById('managerBookings');
+  if (!box) return;
+  if (!firestore) {
+    box.innerHTML = '<div class="empty"><div class="big">☁️</div><h3>Firestore unavailable</h3><p>Please check Firebase setup.</p></div>';
+    return;
+  }
+  if (managerUsersUnsubscribe) return;
 
-  snap.forEach(doc => {
-   const d = doc.data() || {}, user = d.user || {};
-   const rawBookings = Array.isArray(d.bookings) ? d.bookings : [];
-   const rawReports = Array.isArray(d.support) ? d.support : [];
-   const liveBookings = rawBookings.filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > now);
-   const liveReports = rawReports.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now);
-
-   if (liveBookings.length !== rawBookings.length || liveReports.length !== rawReports.length) {
-    cleanupWrites.push(doc.ref.set({
-     bookings: liveBookings,
-     support: liveReports,
-     updatedAt: new Date().toISOString()
-    }, { merge: true }).catch(err => console.error('Expiry cleanup failed for', doc.id, err)));
-   }
-
-   liveBookings.forEach(b => rows.push({ ...b, _uid: doc.id, _userName: user.name || b.name || 'User', _userPhone: user.phone || b.phone || 'Not provided', _userEmail: user.email || '' }));
-   liveReports.forEach(r => reports.push({ ...r, _uid: doc.id, _userName: user.name || r.name || 'Customer', _userPhone: user.phone || r.phone || 'Not provided', _userEmail: user.email || '' }));
+  managerUsersUnsubscribe = firestore.collection('users').onSnapshot(async snap => {
+    const rows = [], reports = [], cleanupWrites = [], now = Date.now();
+    snap.forEach(doc => {
+      const d = doc.data() || {}, user = d.user || {};
+      const rawBookings = Array.isArray(d.bookings) ? d.bookings : [];
+      const rawReports = Array.isArray(d.support) ? d.support : [];
+      const liveBookings = rawBookings.filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > now);
+      const liveReports = rawReports.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now);
+      if (liveBookings.length !== rawBookings.length || liveReports.length !== rawReports.length) {
+        cleanupWrites.push(doc.ref.set({ bookings: liveBookings, support: liveReports, updatedAt: new Date().toISOString() }, { merge: true }).catch(err => console.error('Expiry cleanup failed for', doc.id, err)));
+      }
+      liveBookings.forEach(b => rows.push({...b, _uid:doc.id, _userName:user.name||b.name||'User', _userPhone:user.phone||b.phone||'Not provided', _userEmail:user.email||''}));
+      liveReports.forEach(r => reports.push({...r, _uid:doc.id, _userName:user.name||r.name||'Customer', _userPhone:user.phone||r.phone||'Not provided', _userEmail:user.email||''}));
+    });
+    await Promise.all(cleanupWrites);
+    rows.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    reports.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    MANAGER_BOOKINGS_CACHE = rows;
+    MANAGER_REPORTS_CACHE = reports;
+    renderManagerBookings(rows);
+  }, err => {
+    console.error('Manager realtime listener error', err);
+    box.innerHTML = '<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading customer records.</p></div>';
+    managerUsersUnsubscribe = null;
   });
-
-  await Promise.all(cleanupWrites);
-  rows.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  reports.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  MANAGER_BOOKINGS_CACHE = rows;
-  MANAGER_REPORTS_CACHE = reports;
-  renderManagerBookings(rows);
- } catch(err) {
-  console.error('Manager panel error', err);
-  box.innerHTML = '<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading all customer records.</p></div>';
- }
 }
 
 function renderManagerBookings(rows) {
@@ -858,7 +889,7 @@ function renderManagerBookings(rows) {
   <div style="display:flex;gap:11px;align-items:flex-start">
    <div class="mini-service">${service(b.serviceId).icon}</div>
    <div style="flex:1;min-width:0">
-    <div style="display:flex;justify-content:space-between;gap:8px"><h3 style="margin:0">${esc(service(b.serviceId).name)} Service</h3><span class="status">${esc(b.status||'Confirmed')}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:8px"><h3 style="margin:0">${esc(service(b.serviceId).name)} Service</h3><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status||'Confirmed')}</span></div>
     <p style="margin:4px 0"><b>Order:</b> ${esc(b.id)}</p>
     <p style="margin:3px 0">👤 <b>${esc(b._userName)}</b> • ${esc(b._userPhone)}</p>
     <p style="margin:3px 0">📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p>
@@ -942,7 +973,7 @@ function serviceArt(s, mini = false) {
 }
 function bookingMini(b) {
  const s = service(b.serviceId);
- return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
+ return `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
 }
 
 function home() {
@@ -1057,7 +1088,7 @@ function bookingsPage() {
  const bs = (DB.bookings || []).slice().reverse();
  return `<div class="screen">${header('My Bookings')}
   <div class="tabs"><button class="tab active">All</button><button class="tab">Upcoming</button><button class="tab">Completed</button></div>
-  <div class="booking">${bs.length ? bs.map(b => `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status">${esc(b.status)}</span>${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}<div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString('en-IN')}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join('') : `<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
+  <div class="booking">${bs.length ? bs.map(b => `<div class="card booking-card" onclick="openBooking('${b.id}')"><div class="booking-top"><div class="mini-service">${service(b.serviceId).icon}</div><div style="flex:1"><h3>${esc(service(b.serviceId).name)} Service</h3><p><b>Order:</b> ${esc(b.id)}</p><p>📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p><p>⌖ ${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span>${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}<div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div><div style="border-top:1px solid #eee;margin-top:12px;padding-top:10px;font-size:12px"><span>${new Date(b.createdAt).toLocaleString('en-IN')}</span><span style="float:right;color:#7132d8;font-weight:800">View Details →</span></div></div>`).join('') : `<div class="empty"><div class="big">📦</div><h3>No bookings yet</h3><p>Your service orders will appear here.</p><button class="primary" onclick="go('home')">Explore Services</button></div>`}</div>
   ${bottom('bookings')}</div>`;
 }
 
@@ -1170,39 +1201,60 @@ function getSelected(type) {
  return `${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')} ${suffix}`;
 }
 
-function confirmBooking(serviceId) {
- const name = document.getElementById('custName').value.trim(), phone = document.getElementById('custPhone').value.trim();
- const address = (DB.addresses||[])[0]?.address || '';
- if (!DB.user?.profileComplete || !name || !phone || !address) {
-  toast('Please complete your profile first');
-  showOnboarding();
-  return;
- }
- if (!name) { toast('Please enter your name'); return; }
- if (!/^[0-9+ -]{10,15}$/.test(phone)) { toast('Please enter a valid phone number'); return; }
- if (!address) { toast('Please add your address'); return; }
- const s = service(serviceId);
- const serviceCode = String(s.id || s.name).replace(/[^a-z0-9]/gi, '').toUpperCase();
- const customerCode = String(name).trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() || 'USER';
- const userServiceOrders = (DB.bookings||[]).filter(x => x.serviceId === serviceId && String(x.name||'').trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() === customerCode);
- const serial = userServiceOrders.length + 1;
- const createdAt = new Date().toISOString();
- const booking = { id: `SDS_${serviceCode}_${serial}`, serviceId, date: getSelected('date'), time: getSelected('time'), address, name, phone, note: document.getElementById('note').value.trim(), total: s.price, status: 'Pending', createdAt, expiresAt: new Date(new Date(createdAt).getTime() + BOOKING_RETENTION_MS).toISOString() };
- DB.user.name = name; DB.user.phone = phone; DB.user.profileComplete = true;
- if (!DB.bookings) DB.bookings = [];
- DB.bookings.push(booking);
- if (!DB.notifications) DB.notifications = [];
- DB.notifications.push({ id: uid('N'), title: 'Booking Received', text: `${s.name} service request received for ${booking.date} at ${booking.time}. Waiting for manager confirmation.`, createdAt: new Date().toISOString(), read: false });
- saveState();
- openBookingSuccess(booking);
- openOrderMessages(booking);
- if (IS_MANAGER) {
-  DB.notifications.push({ id: uid('N_M'), title: '📦 New Booking Received!', text: `${s.name} service booked by ${name} for ${booking.date} at ${booking.time}`, createdAt: new Date().toISOString(), read: false, bookingId: booking.id });
-  saveState();
-  sendBrowserNotification('📦 New Booking Received!', `${s.name} service booked by ${name} for ${booking.date} at ${booking.time}`, booking.id);
- }
- updateAllBadges();
+async function confirmBooking(serviceId) {
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const address = (DB.addresses||[])[0]?.address || '';
+  if (!DB.user?.profileComplete || !name || !phone || !address) { toast('Please complete your profile first'); showOnboarding(); return; }
+  if (!/^[0-9+ -]{10,15}$/.test(phone)) { toast('Please enter a valid phone number'); return; }
+  if (!address) { toast('Please add your address'); return; }
+  if (!AUTH_UID || !firestore) { toast('Please sign in again. Cloud booking is unavailable.'); return; }
+
+  const s = service(serviceId);
+  const serviceCode = String(s.id || s.name).replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const customerCode = String(name).trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() || 'USER';
+  const userServiceOrders = (DB.bookings||[]).filter(x => x.serviceId === serviceId && String(x.name||'').trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() === customerCode);
+  const serial = userServiceOrders.length + 1;
+  const createdAt = new Date().toISOString();
+  const booking = {
+    id:`SDS_${serviceCode}_${serial}`, serviceId, date:getSelected('date'), time:getSelected('time'),
+    address, name, phone, note:document.getElementById('note').value.trim(), total:s.price,
+    status:'Pending', createdAt, expiresAt:new Date(Date.now()+BOOKING_RETENTION_MS).toISOString()
+  };
+
+  DB.user.name = name; DB.user.phone = phone; DB.user.profileComplete = true;
+  DB.bookings = Array.isArray(DB.bookings) ? DB.bookings : [];
+  DB.bookings.push(booking);
+  const notifCreatedAt = new Date().toISOString();
+  const notifExpiresAt = new Date(Date.now()+NOTIFICATION_RETENTION_MS).toISOString();
+  DB.notifications = Array.isArray(DB.notifications) ? DB.notifications : [];
+  DB.notifications.push({
+    id:uid('N'), title:'📦 Booking Received',
+    text:`${s.name} service request received for ${booking.date} at ${booking.time}. Waiting for manager confirmation.`,
+    createdAt:notifCreatedAt, expiresAt:notifExpiresAt, read:false, bookingId:booking.id, type:'booking_received'
+  });
+  DB.notifications = DB.notifications.filter(n => notificationDeleteAt(n) > Date.now());
+
+  try {
+    // IMPORTANT: persist the new booking to Firestore immediately so the manager sees it live.
+    await firestore.collection('users').doc(AUTH_UID).set({
+      uid:AUTH_UID, user:{...DB.user}, addresses:DB.addresses||[], bookings:DB.bookings,
+      notifications:DB.notifications, settings:DB.settings||{notifications:true}, updatedAt:notifCreatedAt
+    }, {merge:true});
+
+    saveState();
+    openBookingSuccess(booking);
+    openOrderMessages(booking);
+    updateAllBadges();
+  } catch(err) {
+    console.error('Booking cloud save failed',err);
+    DB.bookings = DB.bookings.filter(b=>b.id!==booking.id);
+    DB.notifications = DB.notifications.filter(n=>n.bookingId!==booking.id);
+    saveState();
+    toast('❌ Booking could not be sent to manager. Please try again.');
+  }
 }
+
 function openBookingSuccess(b) {
  document.getElementById('sheet').innerHTML = `<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
  <div class="booking-actions">${contactButtons(b)}</div>
@@ -1267,12 +1319,21 @@ function openBooking(id) {
  document.getElementById('modal').classList.add('open');
 }
 function openNotifications() {
- const ns = (DB.notifications||[]).slice().reverse();
- document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>🔔 Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${ns.length ? ns.map(n => `<div class="notif-card ${n.read ? '' : 'unread'}"><div class="notif-title">${esc(n.title)}</div><div class="notif-text">${esc(n.text)}</div><div class="notif-time">${new Date(n.createdAt).toLocaleString('en-IN')}</div></div>`).join('') : `<div class="empty"><div class="big">🔔</div><p>No notifications yet.</p></div>`}`;
- document.getElementById('modal').classList.add('open');
- (DB.notifications||[]).forEach(n => n.read = true);
- saveState(); updateAllBadges();
+  cleanupExpiredLocalData();
+  const ns = (DB.notifications||[]).filter(n => !notificationDeleteAt(n) || notificationDeleteAt(n) > Date.now()).slice().reverse();
+  document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>🔔 Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${
+    ns.length ? ns.map(n => `<div class="notif-card ${n.read?'':'unread'}">
+      <div class="notif-title">${esc(n.title)}</div>
+      <div class="notif-text">${esc(n.text)}</div>
+      <div class="notif-time">${new Date(n.createdAt).toLocaleString('en-IN')}</div>
+      <div class="booking-delete-note" style="margin-top:8px">🕒 ${esc(notificationCountdownText(n))}</div>
+    </div>`).join('') : `<div class="empty"><div class="big">🔔</div><p>No notifications yet.</p></div>`
+  }`;
+  document.getElementById('modal').classList.add('open');
+  (DB.notifications||[]).forEach(n=>n.read=true);
+  saveState(); updateAllBadges();
 }
+
 function openMenu() {
  const modal = document.getElementById('modal');
  document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>Sangam Dial Service</h3><button class="close" onclick="closeModal()">×</button></div>
@@ -1358,7 +1419,7 @@ async function sendSupport() {
  if (!subject || !message) { toast('Please fill subject and message'); return; }
  if (!DB.support) DB.support = [];
  const createdAt = new Date().toISOString();
- const report = { id: uid('SUP'), subject, message, createdAt, expiresAt: new Date(new Date(createdAt).getTime() + REPORT_RETENTION_MS).toISOString(), status: 'Open' };
+ const report = { id: uid('SUP'), subject, message, createdAt, expiresAt: new Date(new Date(createdAt).getTime() + NOTIFICATION_RETENTION_MS).toISOString(), status: 'Open' };
  DB.support.push(report);
  if (!DB.notifications) DB.notifications = [];
  DB.notifications.push({ id: uid('N'), title: '📨 New Support Report', text: `Subject: ${subject} · from ${DB.user.name || 'User'}`, createdAt, read: false, expiresAt: new Date(new Date(createdAt).getTime() + REPORT_RETENTION_MS).toISOString() });
@@ -1423,6 +1484,41 @@ function completeOnboarding() {
  toast('Profile saved successfully');
 }
 
+function startCustomerRealtimeListener() {
+  if (!firestore || !AUTH_UID || IS_MANAGER || customerUserUnsubscribe) return;
+  customerUserUnsubscribe = firestore.collection('users').doc(AUTH_UID).onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data() || {};
+    if (data.user) DB.user = {...DB.user,...data.user};
+    if (Array.isArray(data.addresses)) DB.addresses = data.addresses;
+    if (Array.isArray(data.bookings)) DB.bookings = data.bookings;
+    if (Array.isArray(data.notifications)) {
+      DB.notifications = data.notifications.map(n => ({
+        ...n,
+        expiresAt: n.expiresAt || new Date(new Date(n.createdAt||Date.now()).getTime()+NOTIFICATION_RETENTION_MS).toISOString()
+      }));
+    }
+    if (Array.isArray(data.support)) DB.support = data.support;
+    cleanupExpiredLocalData();
+    saveState(); updateAllBadges();
+    if (route.page==='bookings' || route.page==='home' || route.page==='profile') render();
+  }, err => {
+    console.error('Customer realtime listener error',err);
+    customerUserUnsubscribe=null;
+  });
+}
+function startNotificationCleanupTimer() {
+  clearInterval(notificationCleanupTimer);
+  notificationCleanupTimer=setInterval(()=>{
+    const before=JSON.stringify(DB.notifications||[]);
+    cleanupExpiredLocalData();
+    if (JSON.stringify(DB.notifications||[])!==before) {
+      updateAllBadges();
+      if (route.page==='bookings' || route.page==='home' || route.page==='profile') render();
+    }
+  },60000);
+}
+
 function render() {
  const app = document.getElementById('app');
  let out = '';
@@ -1455,6 +1551,7 @@ function initFirebaseAuth() {
   if (user) {
    IS_MANAGER = user.email?.toLowerCase() === 'sangamdialservice@gmail.com';
    AUTH_UID = user.uid;
+   if (IS_MANAGER && customerUserUnsubscribe) { customerUserUnsubscribe(); customerUserUnsubscribe=null; }
    document.getElementById('authGate')?.classList.remove('show');
    document.getElementById('authLoading')?.classList.add('hide');
    document.getElementById('app').style.display = 'block';
@@ -1493,18 +1590,25 @@ function initFirebaseAuth() {
      });
     }
     render();
+    if (!IS_MANAGER) startCustomerRealtimeListener();
+    startNotificationCleanupTimer();
     if (needsOnboarding()) showOnboarding();
     startPopularSlider();
    } catch(err) {
     console.error('Firestore load error', err);
     toast('Could not load cloud data. Using local data.');
     render();
+    if (!IS_MANAGER) startCustomerRealtimeListener();
+    startNotificationCleanupTimer();
     if (needsOnboarding()) showOnboarding();
     startPopularSlider();
    }
   } else {
    AUTH_UID = null;
    IS_MANAGER = false;
+   if (managerUsersUnsubscribe) { managerUsersUnsubscribe(); managerUsersUnsubscribe=null; }
+   if (customerUserUnsubscribe) { customerUserUnsubscribe(); customerUserUnsubscribe=null; }
+   clearInterval(notificationCleanupTimer); notificationCleanupTimer=null;
    document.getElementById('app').style.display = 'none';
    document.getElementById('authLoading')?.classList.add('hide');
   }
@@ -1515,7 +1619,7 @@ function needsOnboarding() {
 }
 
 // --- START APP ---
-const SPLASH_MIN_DURATION = 7000;
+const SPLASH_MIN_DURATION = 8000; // 8 seconds
 let splashStartedAt = Date.now();
 
 function hideSplashAfterMinDuration() {
@@ -1531,8 +1635,10 @@ function hideSplashAfterMinDuration() {
 
 document.addEventListener('DOMContentLoaded', function() {
  document.getElementById('authLoading')?.classList.remove('hide');
-  document.getElementById('authGate')?.classList.remove('show');
+  document.getElementById('authGate')?.classList.add('show');
  initFirebaseAuth();
+ // Keep the splash visible for the full 8 seconds, then reveal login/app.
+ hideSplashAfterMinDuration();
  // Modal click to close
  document.getElementById('modal').addEventListener('click', function(e) {
   if (e.target.id === 'modal') closeModal();
