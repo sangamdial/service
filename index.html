@@ -321,20 +321,14 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .auth-mobile-card{margin:-28px 16px 22px;padding:22px 18px;border-radius:25px;background:#fff;box-shadow:0 20px 50px rgba(44,27,95,.14);position:relative;z-index:2}
 .auth-title{font-size:22px;font-weight:900;margin:0 0 5px}.auth-subtitle{font-size:11px;color:#7a7a86;line-height:1.45;margin:0 0 17px}
 .auth-google{width:100%;height:49px;border-radius:14px;background:#fff;border:1px solid #e4e4eb;color:#26262d;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 16px rgba(30,25,70,.06)}
-.google-g{font-weight:1000;font-size:19px;color:#4285f4}.auth-divider{display:flex;align-items:center;gap:10px;color:#aaa;font-size:9px;margin:16px 0}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#eee;flex:1}
-.auth-phone-row{display:flex;gap:7px;flex-direction:column;width:100%}
-.auth-phone-row input{width:100%}
-.auth-gate input,.auth-gate textarea{width:100%;border:1px solid #e3e3ed;background:#fafaff;border-radius:13px;padding:13px;outline:none}.auth-gate input:focus,.auth-gate textarea:focus{border-color:#8b55e8;box-shadow:0 0 0 3px rgba(113,48,220,.08)}
-.auth-action{width:100%;height:49px;border-radius:14px;margin-top:9px;font-weight:900}.auth-note{text-align:center;font-size:9px;color:#999;line-height:1.45;margin-top:12px}.auth-error{display:none;padding:9px 11px;border-radius:11px;background:#fff0f2;color:#bd3150;font-size:10px;margin-bottom:10px}.auth-error.show{display:block}
-.auth-otp{display:none}.auth-otp.show{display:block}.auth-change{background:none;color:#6d35df;font-size:10px;font-weight:800;margin-top:8px}
-.auth-profile-screen{display:none;position:fixed;inset:0;z-index:1100;background:rgba(20,17,35,.52);align-items:flex-end;justify-content:center}.auth-profile-screen.show{display:flex}.auth-profile-card{width:min(100%,620px);max-height:92vh;overflow:auto;background:#fff;border-radius:28px 28px 0 0;padding:24px}.auth-profile-card h2{margin:0;font-size:24px}.auth-profile-card p{font-size:11px;color:#777;line-height:1.5}
+.google-g{font-weight:1000;font-size:19px;color:#4285f4}
 .auth-desktop{display:none}
 @media(min-width:900px){
  .auth-shell{min-height:100vh;padding:40px}.auth-mobile{display:none}.auth-desktop{display:grid;grid-template-columns:minmax(420px,.9fr) minmax(500px,1.1fr);width:min(1180px,100%);min-height:720px;max-height:calc(100vh - 80px);background:#fff;border-radius:34px;overflow:hidden;box-shadow:0 30px 90px rgba(35,25,85,.18)}
  .auth-desktop-art{background:linear-gradient(145deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);color:#fff;padding:55px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}.auth-desktop-art:before{content:"";position:absolute;width:430px;height:430px;border-radius:50%;border:80px solid rgba(255,255,255,.07);right:-230px;top:-180px}.auth-desktop-art:after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;border:55px solid rgba(255,255,255,.06);left:-210px;bottom:-170px}
  .auth-desktop-brand{display:flex;align-items:center;gap:13px;position:relative;z-index:1}.auth-desktop-brand .auth-brand-mark{width:60px;height:60px}.auth-desktop-brand b{font-size:19px;letter-spacing:2px}.auth-desktop-brand small{display:block;font-size:9px;letter-spacing:3px;opacity:.8;margin-top:3px}
  .auth-desktop-copy{position:relative;z-index:1;max-width:420px}.auth-desktop-copy h1{font-size:46px;line-height:1.02;margin:0 0 17px;letter-spacing:-1.5px}.auth-desktop-copy p{font-size:13px;line-height:1.65;opacity:.9}.auth-benefits{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:28px}.auth-benefit{padding:13px;border-radius:15px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.12);font-size:10px}.auth-desktop-art footer{position:relative;z-index:1;font-size:10px;opacity:.75}
- .auth-desktop-form{padding:60px 70px;display:flex;align-items:center}.auth-desktop-card{width:100%;max-width:480px;margin:auto}.auth-desktop-card .auth-title{font-size:31px}.auth-desktop-card .auth-subtitle{font-size:12px;margin-bottom:24px}.auth-desktop-card .auth-google{height:54px}.auth-desktop-card .auth-action{height:54px}.auth-desktop-card .auth-phone-row input{height:54px}.auth-desktop-card .auth-country{height:54px}
+ .auth-desktop-form{padding:60px 70px;display:flex;align-items:center}.auth-desktop-card{width:100%;max-width:480px;margin:auto}.auth-desktop-card .auth-title{font-size:31px}.auth-desktop-card .auth-subtitle{font-size:12px;margin-bottom:24px}.auth-desktop-card .auth-google{height:54px}
 }
 @media(max-width:899px){.auth-desktop{display:none}}
 .auth-loading{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#fff;background:radial-gradient(circle at 20% 18%,#ff7fb0 0,rgba(255,127,176,0) 30%),radial-gradient(circle at 82% 82%,#5ac9ff 0,rgba(90,201,255,0) 34%),linear-gradient(145deg,#100c2d,#281052 48%,#101c4a);animation:splashBg 12s ease-in-out infinite alternate}.auth-loading.hide{display:none}
@@ -440,17 +434,9 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
   <div class="auth-mobile">
    <div class="auth-mobile-hero"><div class="auth-brand-mark">S</div><h1>One account.<br>All your services.</h1><p>Sign in once and keep your profile, addresses and bookings synced across your devices.</p></div>
    <div class="auth-mobile-card">
-    <h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Choose how you want to sign in.</p>
+    <h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Sign in with Google to continue.</p>
     <div id="authErrorMobile" class="auth-error"></div>
     <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
-    <div class="auth-divider">OR</div>
-    <div class="auth-phone-row">
-     <input id="managerEmailLogin" placeholder="Manager Email" type="email" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
-    </div>
-    <div class="auth-phone-row" style="margin-top:8px">
-     <input id="managerPasswordLogin" placeholder="Password" type="password" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
-    </div>
-    <button class="auth-action purple" onclick="managerEmailLogin()" style="margin-top:8px">🔑 Manager Login</button>
    </div>
   </div>
   <div class="auth-desktop">
@@ -463,14 +449,6 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
     <div style="font-size:10px;color:#7a3de0;font-weight:900;letter-spacing:1.8px;margin-bottom:10px">CUSTOMER LOGIN</div><h2 class="auth-title">Welcome back</h2><p class="auth-subtitle">Sign in to access your synced profile and bookings.</p>
     <div id="authErrorDesktop" class="auth-error"></div>
     <button class="auth-google" onclick="firebaseGoogleLogin()"><span class="google-g">G</span> Continue with Google</button>
-    <div class="auth-divider">OR</div>
-    <div style="display:flex;gap:8px;flex-direction:column;width:100%">
-     <input id="managerEmailLoginDesktop" placeholder="Manager Email" type="email" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
-    </div>
-    <div style="display:flex;gap:8px;flex-direction:column;width:100%;margin-top:8px">
-     <input id="managerPasswordLoginDesktop" placeholder="Password" type="password" style="width:100%;border:1px solid #e3e3ed;border-radius:13px;padding:13px;background:#fafaff;outline:none">
-    </div>
-    <button class="auth-action purple" onclick="managerEmailLogin()" style="margin-top:8px">🔑 Manager Login</button>
    </div></section>
   </div>
  </div>
@@ -683,134 +661,6 @@ function firebaseFriendlyError(err){
  const code=err?.code||"";
  const map={"auth/popup-closed-by-user":"Google sign-in was cancelled.","auth/popup-blocked":"Your browser blocked the Google popup. Please allow popups and try again.","auth/too-many-requests":"Too many attempts. Please wait a little and try again.","auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication.","auth/unauthorized-domain":"This website domain is not authorized in Firebase Authentication."};
  return map[code]||err?.message||"Sign-in failed. Please try again.";
-}
-
-async function managerEmailLogin(){
- clearAuthError();
- const mobileEmail = document.getElementById("managerEmailLogin")?.value?.trim();
- const mobilePass = document.getElementById("managerPasswordLogin")?.value?.trim();
- const desktopEmail = document.getElementById("managerEmailLoginDesktop")?.value?.trim();
- const desktopPass = document.getElementById("managerPasswordLoginDesktop")?.value?.trim();
- const email = mobileEmail || desktopEmail;
- const password = mobilePass || desktopPass;
-
- if(!email || !password){showAuthError("Please enter email and password");return}
- if(email.toLowerCase() !== "sangamdialservice@gmail.com"){
-   showAuthError("Only manager email is allowed");
-   return;
- }
- if(!FIREBASE_READY||!firebaseAuth){
-   showAuthError("Firebase could not initialize. Please try again.");
-   return;
- }
-
- try{
-   await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-   await firebaseAuth.signInWithEmailAndPassword(email,password);
- }catch(err){
-   console.error("Manager login failed",err);
-   showAuthError(firebaseFriendlyError(err) || "Invalid manager credentials. Please check email and password.");
-   document.getElementById("authLoading")?.classList.add("hide");
-   document.getElementById("authGate")?.classList.add("show");
- }
-}
-
-async function handleAuthUser(user){
- if(!user?.uid)return;
-
- if(AUTH_HANDLING || AUTH_HANDLED_UID===user.uid)return;
- AUTH_HANDLING=true;
- AUTH_HANDLED_UID=user.uid;
-
- document.getElementById("authLoading")?.classList.remove("hide");
- document.getElementById("authGate")?.classList.remove("show");
-
- try{
-   CLOUD_LOADING=true;
-   await hydrateCloudUser(user);
-   CLOUD_LOADING=false;
-
-   const isManager=user.email?.toLowerCase()==="sangamdialservice@gmail.com";
-   IS_MANAGER=isManager;
-   MANAGER_AUTH_UID=isManager?user.uid:null;
-
-   document.getElementById("authGate")?.classList.remove("show");
-   document.getElementById("authLoading")?.classList.add("hide");
-   document.getElementById("app").style.display="block";
-   render();
-
-   requestNotificationPermission();
-
-   setTimeout(()=>{
-     if(needsOnboarding())showOnboarding();
-     startPopularSlider();
-   },150);
- }catch(err){
-   CLOUD_LOADING=false;
-   AUTH_HANDLED_UID=null;
-   console.error("Auth/cloud hydration failed",err);
-   document.getElementById("app").style.display="none";
-   document.getElementById("authLoading")?.classList.add("hide");
-   document.getElementById("authGate")?.classList.add("show");
-
-   const code=err?.code||"";
-   if(code==="permission-denied"||code==="firestore/permission-denied"){
-     showAuthError("Login succeeded, but Firebase database access is blocked by your Firestore rules.");
-   }else if(code==="unavailable"){
-     showAuthError("Firebase is temporarily unavailable. Please check your internet and try again.");
-   }else{
-     showAuthError("Could not load your cloud profile. Please check your internet/Firebase rules and try again.");
-   }
- }finally{
-   AUTH_HANDLING=false;
- }
-}
-
-function requestNotificationPermission(){
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "default") {
-    Notification.requestPermission().then(function(permission) {
-      if (permission === "granted") toast("🔔 Notifications enabled!");
-      else toast("🔔 Please allow notifications.");
-    });
-  }
-}
-
-function sendBrowserNotification(title, body, bookingId){
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "granted") {
-    const notification = new Notification(title, {
-      body: body,
-      icon: "https://img.icons8.com/color/96/000000/service.png",
-      tag: bookingId || "booking",
-      requireInteraction: true,
-      silent: false
-    });
-    notification.onclick = function() {
-      window.focus();
-      if (route.page !== "manager" && IS_MANAGER) go("manager");
-      else if (route.page !== "bookings") go("bookings");
-      notification.close();
-    };
-    setTimeout(() => notification.close(), 15000);
-  }
-}
-
-function sendWhatsAppToCustomer(phone, message){
-  if(!phone) return;
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
-  if(cleanPhone.length < 10) return;
-  const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
-  window.open(waUrl, "_blank", "noopener");
-}
-
-function getCustomerWhatsAppMessage(b, status, reason){
-  const s = service(b.serviceId);
-  if(status === "Confirmed"){
-    return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
-  } else {
-    return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
-  }
 }
 
 async function signOutUser(){
@@ -1293,6 +1143,21 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
     };
     notifications.push(customerNotif);
     
+    // Manager notification (for manager's own panel)
+    const managerNotif = {
+      id: "N_M_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
+      title: newStatus === "Confirmed" ? "✅ Booking Confirmed!" : "❌ Booking Rejected",
+      text: `${s.name} service booking (${target.id}) has been ${newStatus.toLowerCase()} for customer ${target.name}`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      bookingId: target.id,
+      type: "manager_status_update"
+    };
+    // Add to manager's own notification list (this user is manager)
+    // We'll also add to global DB.notifications for the manager user
+    DB.notifications.push(managerNotif);
+    saveState(false);
+    
     await ref.set({
       bookings: bookings,
       notifications: notifications,
@@ -1326,6 +1191,7 @@ async function updateBookingStatusManager(uidValue, bookingId, newStatus, reason
       toast("⚠️ Customer phone not available for WhatsApp");
     }
     
+    updateAllBadges();
   } catch(err){
     console.error("Manager status update failed", err);
     toast("Error: " + (err.message || "Unknown error"));
@@ -1470,6 +1336,16 @@ function confirmBooking(serviceId){
  
  // 🔔 Send notification to manager if manager is logged in
  if(IS_MANAGER){
+   // Also add to manager's own notifications
+   DB.notifications.push({
+     id:uid("N_M"),
+     title:"📦 New Booking Received!",
+     text:`${s.name} service booked by ${name} for ${booking.date} at ${booking.time}`,
+     createdAt:new Date().toISOString(),
+     read:false,
+     bookingId:booking.id
+   });
+   saveState(false);
    sendBrowserNotification(
      "📦 New Booking Received!",
      `${s.name} service booked by ${name} for ${booking.date} at ${booking.time}`,
