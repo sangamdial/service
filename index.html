@@ -637,7 +637,6 @@ async function firebaseGoogleLogin() {
   console.error('Google sign-in failed', err);
   showAuthError(firebaseFriendlyError(err));
   document.getElementById('authLoading')?.classList.add('hide');
-  document.getElementById('authGate')?.classList.add('show');
  }
 }
 
@@ -647,7 +646,6 @@ async function signOutUser() {
   AUTH_UID = null;
   IS_MANAGER = false;
   document.getElementById('app').style.display = 'none';
-  document.getElementById('authGate')?.classList.add('show');
   document.getElementById('authLoading')?.classList.add('hide');
   route = { page: 'home', service: null };
  } catch(err) { console.error(err); toast('Sign out failed.'); }
@@ -1445,7 +1443,6 @@ function render() {
 function initFirebaseAuth() {
  if (!FIREBASE_READY || !firebaseAuth) {
   document.getElementById('authLoading')?.classList.add('hide');
-  document.getElementById('authGate')?.classList.add('show');
   showAuthError('Firebase initialization failed. Check your Firebase config.');
   return;
  }
@@ -1453,7 +1450,6 @@ function initFirebaseAuth() {
   console.error('Firebase redirect result error', err);
   showAuthError(firebaseFriendlyError(err));
   document.getElementById('authLoading')?.classList.add('hide');
-  document.getElementById('authGate')?.classList.add('show');
  });
  firebaseAuth.onAuthStateChanged(async user => {
   if (user) {
@@ -1510,7 +1506,6 @@ function initFirebaseAuth() {
    AUTH_UID = null;
    IS_MANAGER = false;
    document.getElementById('app').style.display = 'none';
-   document.getElementById('authGate')?.classList.add('show');
    document.getElementById('authLoading')?.classList.add('hide');
   }
  });
@@ -1527,13 +1522,16 @@ function hideSplashAfterMinDuration() {
   const elapsed = Date.now() - splashStartedAt;
   const wait = Math.max(0, SPLASH_MIN_DURATION - elapsed);
   setTimeout(() => {
-    document.getElementById('authLoading')?.classList.add('hide');
+    const loading = document.getElementById('authLoading');
+    const gate = document.getElementById('authGate');
+    if (loading) loading.classList.add('hide');
+    if (gate) gate.classList.add('show');
   }, wait);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
- document.getElementById('authGate')?.classList.add('show');
  document.getElementById('authLoading')?.classList.remove('hide');
+  document.getElementById('authGate')?.classList.remove('show');
  initFirebaseAuth();
  // Modal click to close
  document.getElementById('modal').addEventListener('click', function(e) {
