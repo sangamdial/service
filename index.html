@@ -21,7 +21,8 @@ button{cursor:pointer;border:0}
 .top-gradient{background:linear-gradient(135deg,#ee3181 0%,#bd2cde 47%,#6354e9 100%);color:#fff}
 .home-head{padding:20px 18px 22px;border-radius:0 0 30px 30px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.icon-btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.17);color:#fff;font-size:21px;display:grid;place-items:center}
+.icon-btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.17);color:#fff;font-size:21px;display:grid;place-items:center;position:relative}
+.icon-btn .notif-badge{position:absolute;top:-4px;right:-4px;background:#e3315c;color:#fff;border-radius:99px;font-size:9px;font-weight:800;min-width:18px;text-align:center;line-height:16px;padding:0 5px}
 .hello{font-size:14px;margin-top:14px;opacity:.92}.hello strong{font-size:25px;display:block;line-height:1.2;margin-top:4px}
 .search{margin-top:18px;background:#fff;border-radius:15px;height:51px;padding:0 8px 0 16px;display:flex;align-items:center;box-shadow:0 7px 20px rgba(49,21,85,.12)}
 .search input{border:0;outline:0;flex:1;color:#444;min-width:0}.search button{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6c28dd,#7d45ed);color:#fff;font-size:19px}
@@ -375,6 +376,33 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 .manager-stat-card.rejected .num{color:#d43b3b}
 .rejection-reason{background:#fff5f5;border:1px solid #ffdada;padding:8px 12px;border-radius:10px;font-size:11px;color:#b33;margin-top:6px}
 .rejection-reason strong{color:#8a2a2a}
+
+/* Notification badge on bell */
+.notif-bell{position:relative}
+.notif-badge{position:absolute;top:-6px;right:-8px;background:#e3315c;color:#fff;border-radius:99px;font-size:9px;font-weight:800;min-width:18px;text-align:center;line-height:16px;padding:0 5px}
+
+/* Notif cards in modal */
+.notif-card{padding:14px;border-radius:16px;background:#f9f9ff;border:1px solid #ececf3;margin-bottom:10px}
+.notif-card.unread{background:#f2edff;border-left:4px solid #7132d8}
+.notif-title{font-weight:800;font-size:13px}
+.notif-text{font-size:12px;color:#555;margin:4px 0 6px}
+.notif-time{font-size:9px;color:#999}
+
+/* Report items */
+.report-item{padding:12px;border-radius:14px;background:#fafafe;border:1px solid #eee;margin-bottom:8px}
+.report-item .subj{font-weight:800;font-size:13px}
+.report-item .msg{font-size:12px;color:#555;margin:4px 0}
+.report-item .meta{font-size:9px;color:#999}
+
+/* action buttons */
+.action-btns{display:flex;gap:8px;margin-top:10px}
+.action-btns button{padding:8px 14px;border-radius:12px;border:0;font-weight:700;font-size:11px;cursor:pointer}
+.btn-confirm{background:#17844b;color:#fff}
+.btn-reject{background:#d43b3b;color:#fff}
+
+.status.pending{background:#fff3d6;color:#b8860b}
+.status.confirmed{background:#e0f7e9;color:#0b9b59}
+.status.rejected{background:#ffe5e5;color:#c0392b}
 </style>
 </head>
 <body>
@@ -458,7 +486,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
 <script>
 /* =========================================================
-   SANGAM DIAL SERVICE — Complete Manager Panel
+   SANGAM DIAL SERVICE — Complete Manager Panel with Notifications
    ========================================================= */
 setTimeout(()=>document.getElementById("authLoading")?.classList.add("hide"),7000);
  const STORAGE_BASE_KEY = "sangam_dial_service_v2";
@@ -634,7 +662,6 @@ async function firebaseGoogleLogin(){
    return;
  }
  try{
-   // Explicit persistence makes the mobile redirect flow reliable across reloads.
    await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
    const provider=new firebase.auth.GoogleAuthProvider();
    provider.setCustomParameters({prompt:"select_account"});
@@ -679,7 +706,6 @@ async function managerEmailLogin(){
 
  try{
    await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-   // onAuthStateChanged() is the single source of truth and will open the app.
    await firebaseAuth.signInWithEmailAndPassword(email,password);
  }catch(err){
    console.error("Manager login failed",err);
@@ -692,8 +718,6 @@ async function managerEmailLogin(){
 async function handleAuthUser(user){
  if(!user?.uid)return;
 
- // Firebase can emit auth state more than once during a redirect. Do not
- // hydrate/render the same account twice.
  if(AUTH_HANDLING || AUTH_HANDLED_UID===user.uid)return;
  AUTH_HANDLING=true;
  AUTH_HANDLED_UID=user.uid;
@@ -715,7 +739,6 @@ async function handleAuthUser(user){
    document.getElementById("app").style.display="block";
    render();
 
-   // 🔔 Request notification permission
    requestNotificationPermission();
 
    setTimeout(()=>{
@@ -743,32 +766,18 @@ async function handleAuthUser(user){
  }
 }
 
-// 🔔 BROWSER NOTIFICATION FUNCTIONS 🔔
 function requestNotificationPermission(){
-  if (!("Notification" in window)) {
-    console.log("This browser does not support notifications");
-    return;
-  }
-  
+  if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
     Notification.requestPermission().then(function(permission) {
-      if (permission === "granted") {
-        toast("🔔 Notifications enabled! You'll get alerts for new bookings.");
-      } else {
-        toast("🔔 Please allow notifications to get booking alerts.");
-      }
+      if (permission === "granted") toast("🔔 Notifications enabled!");
+      else toast("🔔 Please allow notifications.");
     });
-  } else if (Notification.permission === "granted") {
-    toast("🔔 Notifications are enabled.");
   }
 }
 
 function sendBrowserNotification(title, body, bookingId){
-  if (!("Notification" in window)) {
-    console.log("This browser does not support notifications");
-    return;
-  }
-  
+  if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
     const notification = new Notification(title, {
       body: body,
@@ -777,31 +786,16 @@ function sendBrowserNotification(title, body, bookingId){
       requireInteraction: true,
       silent: false
     });
-    
     notification.onclick = function() {
       window.focus();
-      if (route.page !== "manager" && IS_MANAGER) {
-        go("manager");
-      } else if (route.page !== "bookings") {
-        go("bookings");
-      }
+      if (route.page !== "manager" && IS_MANAGER) go("manager");
+      else if (route.page !== "bookings") go("bookings");
       notification.close();
     };
-    
-    setTimeout(() => {
-      notification.close();
-    }, 15000);
-    
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission().then(function(permission) {
-      if (permission === "granted") {
-        sendBrowserNotification(title, body, bookingId);
-      }
-    });
+    setTimeout(() => notification.close(), 15000);
   }
 }
 
-// 📤 SEND WHATSAPP MESSAGE TO CUSTOMER
 function sendWhatsAppToCustomer(phone, message){
   if(!phone) return;
   const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -813,31 +807,9 @@ function sendWhatsAppToCustomer(phone, message){
 function getCustomerWhatsAppMessage(b, status, reason){
   const s = service(b.serviceId);
   if(status === "Confirmed"){
-    return `✅ Your booking has been CONFIRMED!
-
-📋 Order ID: ${b.id}
-🔧 Service: ${s.name}
-📅 Date: ${b.date}
-⏰ Time: ${b.time}
-📍 Address: ${b.address}
-👤 Customer: ${b.name}
-
-Thank you for choosing Sangam Dial Service!
-For any query, contact: 7859056418`;
+    return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
   } else {
-    return `❌ Your booking has been REJECTED.
-
-📋 Order ID: ${b.id}
-🔧 Service: ${s.name}
-📅 Date: ${b.date}
-⏰ Time: ${b.time}
-📍 Address: ${b.address}
-👤 Customer: ${b.name}
-
-Reason: ${reason || 'Not specified'}
-
-We apologize for the inconvenience.
-For any query, contact: 7859056418`;
+    return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
   }
 }
 
@@ -869,8 +841,6 @@ function initFirebaseAuth(){
    return;
  }
 
- // Process redirect only for errors. The auth-state listener below is the
- // single path that hydrates the user, avoiding duplicate handling on mobile.
  firebaseAuth.getRedirectResult().catch(err=>{
    console.error("Firebase redirect result error",err);
    showAuthError(firebaseFriendlyError(err));
@@ -1008,7 +978,7 @@ function go(page,svc=null){
 }
 
 function header(title,back="home"){
- return `<div class="top-gradient page-head"><button class="back" onclick="go('${back}')">‹</button><h2>${title}</h2><button class="icon-btn" onclick="openNotifications()">🔔</button></div>`;
+ return `<div class="top-gradient page-head"><button class="back" onclick="go('${back}')">‹</button><h2>${title}</h2><button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHeader">${DB.notifications.filter(n=>!n.read).length}</span></button></div>`;
 }
 function bottom(active){
  return `<nav class="bottom-nav">
@@ -1049,7 +1019,9 @@ function home(){
  const recent=DB.bookings.slice().reverse().slice(0,2);
  return `<div class="screen">
   <div class="top-gradient home-head">
-   <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button></div>
+   <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button>
+   <button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHome">${DB.notifications.filter(n=>!n.read).length}</span></button>
+   </div>
    <div class="hello compact-hello">Hello, ${esc(DB.user.name||"User")} 👋</div>
    <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
   </div>
@@ -1180,10 +1152,10 @@ function supportPage(){
  return `<div class="screen">${header("Support")}
  <div class="content">
   <button class="card banner support-call-card" style="margin-bottom:12px;width:100%;text-align:left" onclick="callSupport()"><div><h3>Need Help?</h3><p>Tap here to call our support team directly.</p></div><div class="arrow">☎</div></button>
-  <div class="card" style="padding:16px;margin-bottom:12px"><h3 style="margin:0 0 5px">Send a Report</h3><p style="color:#777;font-size:11px">Your report is saved locally and prepared directly for our WhatsApp support number.</p>
+  <div class="card" style="padding:16px;margin-bottom:12px"><h3 style="margin:0 0 5px">Send a Report</h3><p style="color:#777;font-size:11px">Your report is saved locally and prepared directly for our WhatsApp support number and also appears in manager panel.</p>
    <div class="field"><label>Subject</label><input id="supportSubject" placeholder="e.g. Booking issue"></div>
    <div class="field"><label>Report / Message</label><textarea id="supportMessage" placeholder="Tell us what happened..."></textarea></div>
-   <button class="full purple" onclick="sendSupport()">Send Report on WhatsApp&nbsp; →</button>
+   <button class="full purple" onclick="sendSupport()">Send Report on WhatsApp &nbsp; →</button>
   </div>
   ${DB.support.slice().reverse().map(x=>`<div class="card" style="padding:14px;margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(x.subject)}</b><span class="status">${esc(x.status||"Open")}</span></div><div style="font-size:11px;color:#777;margin-top:5px">${esc(x.message)}</div><div style="font-size:9px;color:#aaa;margin-top:9px">${new Date(x.createdAt).toLocaleString("en-IN")}</div></div>`).join("")}
  </div>${bottom("support")}</div>`;
@@ -1203,6 +1175,7 @@ function managerPage(){
     <button class="manager-tab" data-tab="pending" onclick="switchManagerTab('pending')">⏳ Pending <span class="count" id="countPending">0</span></button>
     <button class="manager-tab" data-tab="confirmed" onclick="switchManagerTab('confirmed')">✅ Confirmed <span class="count" id="countConfirmed">0</span></button>
     <button class="manager-tab" data-tab="rejected" onclick="switchManagerTab('rejected')">❌ Rejected <span class="count" id="countRejected">0</span></button>
+    <button class="manager-tab" data-tab="reports" onclick="switchManagerTab('reports')">📨 Reports <span class="count" id="countReports">0</span></button>
    </div>
    <div class="manager-stats-grid" id="managerStats">
     <div class="manager-stat-card pending"><div class="num" id="statPending">0</div><div class="label">Pending</div></div>
@@ -1387,6 +1360,21 @@ function managerActionButtons(b){
 function renderManagerBookings(rows){
  const stats=document.getElementById("managerStats"),box=document.getElementById("managerBookings");
  if(!stats||!box)return;
+ 
+ // Handle reports tab
+ if(managerTab === "reports"){
+   const reps=DB.support.slice().reverse();
+   if(!reps.length){box.innerHTML='<div class="empty"><div class="big">📨</div><h3>No reports</h3><p>Reports from customers will appear here.</p></div>';return}
+   box.innerHTML=reps.map(r=>`
+     <div class="card" style="padding:14px;margin-bottom:9px;border-left:3px solid #7132d8">
+       <div style="font-weight:800">${esc(r.subject)}</div>
+       <div style="font-size:12px;color:#555;margin:4px 0">${esc(r.message)}</div>
+       <div style="font-size:9px;color:#999">From: ${esc(DB.user.name||'Customer')} · ${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+     </div>
+   `).join('');
+   return;
+ }
+ 
  const filtered = managerTab === "all" ? rows : rows.filter(b => (b.status || "Pending").toLowerCase() === managerTab);
  const pending=rows.filter(x=>x.status==="Pending").length;
  const confirmed=rows.filter(x=>x.status==="Confirmed").length;
@@ -1399,6 +1387,7 @@ function renderManagerBookings(rows){
  document.getElementById("countPending").textContent = pending;
  document.getElementById("countConfirmed").textContent = confirmed;
  document.getElementById("countRejected").textContent = rejected;
+ document.getElementById("countReports").textContent = DB.support.length;
 
  if(!filtered.length){box.innerHTML='<div class="empty"><div class="big">📦</div><h3>No bookings in this category</h3><p>All bookings appear here for manager review.</p></div>';return}
  box.innerHTML=filtered.map(b=>`<div class="card booking-card" style="margin-bottom:10px">
@@ -1440,6 +1429,12 @@ else if(route.page==="profile")out=profilePage();
  else if(route.page==="about")out=aboutPage();
  app.innerHTML=out;
  if(route.page==="manager") setTimeout(loadManagerPanel,50);
+ // update notification badge after render
+ setTimeout(updateAllBadges,100);
+}
+function updateAllBadges(){
+ const count=DB.notifications.filter(n=>!n.read).length;
+ document.querySelectorAll('.notif-badge').forEach(el=>el.textContent=count);
 }
 function selectChoice(btn,type){
  document.querySelectorAll(type==="date"?"#dateGrid .choice":"#timeGrid .choice").forEach(x=>x.classList.remove("selected"));
@@ -1481,6 +1476,7 @@ function confirmBooking(serviceId){
      booking.id
    );
  }
+ updateAllBadges();
 }
 function openBookingSuccess(b){
  document.getElementById("sheet").innerHTML=`<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
@@ -1578,9 +1574,9 @@ function closeModal(){document.getElementById("modal").classList.remove("open","
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 function openNotifications(){
  const ns=DB.notifications.slice().reverse();
- document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${ns.length?ns.map(n=>`<div class="card" style="padding:13px;margin-bottom:9px"><b>${esc(n.title)}</b><div style="font-size:11px;color:#777;margin-top:4px">${esc(n.text)}</div><div style="font-size:9px;color:#aaa;margin-top:7px">${new Date(n.createdAt).toLocaleString("en-IN")}</div></div>`).join(""):`<div class="empty"><div class="big">🔔</div><p>No notifications yet.</p></div>`}`;
+ document.getElementById("sheet").innerHTML=`<div class="sheet-head"><h3>🔔 Notifications</h3><button class="close" onclick="closeModal()">×</button></div>${ns.length?ns.map(n=>`<div class="notif-card ${n.read?'':'unread'}"><div class="notif-title">${esc(n.title)}</div><div class="notif-text">${esc(n.text)}</div><div class="notif-time">${new Date(n.createdAt).toLocaleString("en-IN")}</div></div>`).join(""):`<div class="empty"><div class="big">🔔</div><p>No notifications yet.</p></div>`}`;
  document.getElementById("modal").classList.add("open");
- DB.notifications.forEach(n=>n.read=true);saveState();
+ DB.notifications.forEach(n=>n.read=true);saveState();updateAllBadges();
 }
 function openMenu(){
  const modal=document.getElementById("modal");
@@ -1666,10 +1662,14 @@ function sendSupport(){
  const subject=document.getElementById("supportSubject").value.trim(),message=document.getElementById("supportMessage").value.trim();
  if(!subject||!message){toast("Please fill subject and message");return}
  const report={id:uid("SUP"),subject,message,createdAt:new Date().toISOString(),status:"Open"};
- DB.support.push(report);saveState();
+ DB.support.push(report);
+ // notification for manager
+ DB.notifications.push({id:uid("N"),title:"📨 New Support Report",text:`Subject: ${subject} · from ${DB.user.name||'User'}`,createdAt:new Date().toISOString(),read:false});
+ saveState();
  const wa=`https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(supportMessageText(report))}`;
  window.open(wa,"_blank","noopener");
- toast("Report saved and WhatsApp opened");
+ toast("Report sent to WhatsApp & Manager");
+ updateAllBadges();
 }
 function searchServices(q){
  q=q.toLowerCase().trim();
