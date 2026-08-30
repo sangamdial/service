@@ -409,6 +409,21 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 @keyframes orbitRotate{to{transform:rotate(360deg)}}
 @media(max-width:600px){.splash-core-wrap{width:235px;height:235px}.splash-orbit{width:280px;height:280px;margin:-140px}.orbit-b{width:320px;height:320px;margin:-160px}.orbit-c{width:360px;height:360px;margin:-180px}.splash-brand{font-size:29px}.splash-tagline{font-size:8px;letter-spacing:1.2px}.splash-tagline span{width:15px}}
 @media(prefers-reduced-motion:reduce){.auth-loading *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* --- NEW MANAGER / COMMUNITY / LOCATION UI --- */
+.manager-home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.manager-home-action{min-height:96px;border-radius:18px;padding:15px;text-align:left;border:1px solid #e9e5f4;background:#fff;box-shadow:0 8px 22px rgba(50,40,100,.07);cursor:pointer;transition:.22s}
+.manager-home-action:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(50,40,100,.12)}
+.manager-home-action .mh-icon{font-size:25px;margin-bottom:7px}.manager-home-action b{display:block;font-size:13px}.manager-home-action small{display:block;color:#888;font-size:9px;margin-top:3px;line-height:1.35}
+.community-card{padding:15px;margin-bottom:10px;border-left:4px solid #7132d8;position:relative}
+.community-card .community-time{font-size:9px;color:#999;margin-top:7px}
+.community-card .community-expiry{font-size:9px;color:#8a6500;background:#fff8e5;border:1px solid #ffe8b0;border-radius:9px;padding:6px 8px;margin-top:8px;display:inline-block}
+.community-compose{padding:15px;margin-bottom:12px;background:linear-gradient(145deg,#fff,#f7f1ff)}
+.location-link-box{margin-top:9px;padding:10px;border-radius:12px;background:#f4f7ff;border:1px solid #dfe7ff}
+.location-link-box a{color:#2877d1;font-weight:900;text-decoration:none;font-size:11px}
+@media(max-width:360px){.manager-home-grid{gap:7px}.manager-home-action{padding:12px;min-height:88px}}
+@media(min-width:900px){.manager-home-grid{grid-template-columns:repeat(4,1fr)}}
+
 </style>
 </head>
 <body>
@@ -489,7 +504,7 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 // ============================================================
 
 // --- GLOBALS ---
-let DB = { user: { name: 'Guest', phone: '', email: '', avatar: 'G', profileComplete: false }, addresses: [], bookings: [], notifications: [], support: [], settings: { notifications: true }, meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } };
+let DB = { user: { name: 'Guest', phone: '', email: '', avatar: 'G', profileComplete: false }, addresses: [], bookings: [], notifications: [], support: [], extraServices: [], settings: { notifications: true }, meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } };
 let IS_MANAGER = false;
 let AUTH_UID = null;
 let route = { page: 'home', service: null };
@@ -503,6 +518,8 @@ let firebaseApp = null, firebaseAuth = null, firestore = null;
 let managerUsersUnsubscribe = null;
 let customerUserUnsubscribe = null;
 let notificationCleanupTimer = null;
+let communityUnsubscribe = null;
+let COMMUNITY_MESSAGES_CACHE = [];
 let authResolve = null;
 
 // --- CONSTANTS ---
@@ -527,6 +544,7 @@ const POPULAR_SERVICES = ["ac","tv","cctv","plumbing","washing","electrician"];
 const BOOKING_RETENTION_MS = 20*24*60*60*1000;
 const REPORT_RETENTION_MS = 20*24*60*60*1000;
 const NOTIFICATION_RETENTION_MS = 5*24*60*60*1000;
+const COMMUNITY_RETENTION_MS = 5*24*60*60*1000;
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -550,7 +568,8 @@ try {
 // --- HELPERS ---
 function esc(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
 function uid(p) { return p + '-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,7).toUpperCase(); }
-function service(id) { return SERVICES.find(s => s.id === id) || SERVICES[0]; }
+function allServices() { return [...SERVICES, ...(Array.isArray(DB.extraServices) ? DB.extraServices : [])]; }
+function service(id) { return allServices().find(s => s.id === id) || SERVICES[0]; }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(window._toast); window._toast = setTimeout(() => el.classList.remove('show'), 2400); }
 function initials(name) { return (name || 'U').split(/\s+/).slice(0,2).map(x => x[0]).join('').toUpperCase(); }
 function bookingDeleteAt(b) { const created = new Date(b?.createdAt || 0).getTime(); return created > 0 ? created + BOOKING_RETENTION_MS : 0; }
@@ -566,6 +585,7 @@ function cleanupExpiredLocalData() {
   DB.bookings = Array.isArray(DB.bookings) ? DB.bookings.filter(b => !bookingDeleteAt(b) || bookingDeleteAt(b) > now) : [];
   DB.support = Array.isArray(DB.support) ? DB.support.filter(r => !reportDeleteAt(r) || reportDeleteAt(r) > now) : [];
   DB.notifications = Array.isArray(DB.notifications) ? DB.notifications.filter(n => !notificationDeleteAt(n) || notificationDeleteAt(n) > now) : [];
+  COMMUNITY_MESSAGES_CACHE = Array.isArray(COMMUNITY_MESSAGES_CACHE) ? COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt || 0).getTime() > now) : [];
   saveState();
 }
 function bookingCountdownText(b) {
@@ -1019,6 +1039,7 @@ function renderManagerBookings(rows) {
     <p style="margin:3px 0">📅 ${esc(b.date)} &nbsp; ⏰ ${esc(b.time)}</p>
     <p style="margin:3px 0">⌖ ${esc(b.address||'Not provided')}</p>
     ${b.note ? `<p style="margin:3px 0">📝 ${esc(b.note)}</p>` : ''}
+     ${b.locationLink ? `<div class="location-link-box">📍 <a href="${esc(b.locationLink)}" target="_blank" rel="noopener">Open Customer Location in Google Maps ↗</a></div>` : '<p style="margin:3px 0;color:#999">📍 Location link not available</p>'}
     ${b.rejectionReason ? `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${esc(b.rejectionReason)}</div>` : ''}
     <div class="booking-delete-note">${esc(bookingCountdownText(b))}</div>
     ${managerActionButtons(b)}
@@ -1067,6 +1088,7 @@ function bottom(active) {
   <button class="nav-item ${active==='home'?'active':''}" onclick="go('home')"><span>⌂</span>Home</button>
   <button class="nav-item ${active==='bookings'?'active':''}" onclick="go('bookings')"><span>▣</span>Bookings</button>
   <button class="nav-item ${active==='support'?'active':''}" onclick="go('support')"><span>◉</span>Support</button>
+  <button class="nav-item ${active==='community'?'active':''}" onclick="go('community')"><span>💬</span>Community</button>
   <button class="nav-item ${active==='about'?'active':''}" onclick="go('about')"><span>ⓘ</span>About Us</button>
   <button class="nav-item ${active==='profile'?'active':''}" onclick="go('profile')"><span>♙</span>Profile</button>
  </nav>`;
@@ -1103,8 +1125,41 @@ function bookingMini(b) {
   <div class="booking-top"><div class="mini-service">${serviceArt(s,true)}</div><div style="flex:1"><h3>${esc(s.name)} Service</h3><p>${esc(b.date)} • ${esc(b.time)}</p><p>${esc(b.address)}</p><span class="status ${String(b.status||'').toLowerCase()}">${esc(b.status)}</span><div class="booking-delete-note" data-booking-delete-at="${bookingDeleteAt(b)}" data-booking-created-at="${new Date(b.createdAt).getTime()}">${esc(bookingCountdownText(b))}</div></div></div></div>`;
 }
 
+function managerHome() {
+  const total = MANAGER_BOOKINGS_CACHE.length;
+  const pending = MANAGER_BOOKINGS_CACHE.filter(b => b.status === 'Pending').length;
+  const reports = MANAGER_REPORTS_CACHE.length;
+  return `<div class="screen">
+   <div class="top-gradient home-head">
+    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button>
+    <button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHome">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button></div>
+    <div class="hello compact-hello">Manager Dashboard 👋</div>
+    <div style="margin-top:7px;font-size:11px;opacity:.85">Sangam Dial Service • Management</div>
+   </div>
+   <div class="content">
+    <div class="section-title">Manager Controls</div>
+    <div class="manager-home-grid">
+      <button class="manager-home-action" onclick="go('manager')"><div class="mh-icon">📋</div><b>All Bookings</b><small>${total} customer booking(s) • ${pending} pending</small></button>
+      <button class="manager-home-action" onclick="go('manager');setTimeout(()=>switchManagerTab('reports'),80)"><div class="mh-icon">📊</div><b>Reports</b><small>${reports} customer report(s)</small></button>
+      <button class="manager-home-action" onclick="openAddServiceModal()"><div class="mh-icon">➕</div><b>Add Service</b><small>Add a new service for future bookings</small></button>
+      <button class="manager-home-action" onclick="openCommunityComposer()"><div class="mh-icon">💬</div><b>Message</b><small>Send a message to every user</small></button>
+    </div>
+    <div class="card" style="padding:16px;background:linear-gradient(145deg,#fff,#f7f1ff)">
+      <div style="font-size:10px;color:#7132d8;font-weight:900;text-transform:uppercase;letter-spacing:1px">Quick Status</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+       <div style="text-align:center;padding:10px;border-radius:13px;background:#fff;border:1px solid #eee"><b style="font-size:22px">${total}</b><div style="font-size:9px;color:#888">All</div></div>
+       <div style="text-align:center;padding:10px;border-radius:13px;background:#fff;border:1px solid #eee"><b style="font-size:22px">${pending}</b><div style="font-size:9px;color:#888">Pending</div></div>
+       <div style="text-align:center;padding:10px;border-radius:13px;background:#fff;border:1px solid #eee"><b style="font-size:22px">${reports}</b><div style="font-size:9px;color:#888">Reports</div></div>
+      </div>
+    </div>
+    <div class="section-title">Community</div>
+    <button class="card banner" style="width:100%;text-align:left" onclick="go('community')"><div><h3>Open Community</h3><p>View the messages currently visible to all users.</p></div><div class="arrow">›</div></button>
+   </div>${bottom('home')}
+  </div>`;
+}
+
 function home() {
- const cats = SERVICES.map(s => `<button class="cat" onclick="go('service','${s.id}')"><div class="service-thumb">${serviceArt(s,true)}</div><div class="cat-name"><b>${esc(s.name)}</b><small>VIEW →</small></div></button>`).join('');
+ const cats = allServices().map(s => `<button class="cat" onclick="go('service','${s.id}')"><div class="service-thumb">${serviceArt(s,true)}</div><div class="cat-name"><b>${esc(s.name)}</b><small>VIEW →</small></div></button>`).join('');
  const recent = (DB.bookings || []).slice().reverse().slice(0,2);
  return `<div class="screen">
   <div class="top-gradient home-head">
@@ -1139,6 +1194,108 @@ function home() {
    <div class="hindi-subtagline">एक कॉल करें, समाधान घर पे पाएँ</div>
   </div>${bottom('home')}
  </div>`;
+}
+
+function communityDeleteAt(m) {
+  const t = new Date(m?.expiresAt || 0).getTime();
+  return t || 0;
+}
+function communityCountdownText(m) {
+  const exp = communityDeleteAt(m), diff = exp - Date.now();
+  if (!exp || diff <= 0) return 'Expired';
+  const days = Math.floor(diff/86400000), hours = Math.floor((diff%86400000)/3600000);
+  if (days > 0) return `Auto-delete in ${days} day${days===1?'':'s'}`;
+  return `Auto-delete in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
+}
+function startCommunityListener() {
+  if (!firestore || !AUTH_UID || communityUnsubscribe) return;
+  communityUnsubscribe = firestore.collection('communityMessages').onSnapshot(snap => {
+    const now = Date.now();
+    COMMUNITY_MESSAGES_CACHE = [];
+    snap.forEach(doc => {
+      const m = { id: doc.id, ...(doc.data() || {}) };
+      if (new Date(m.expiresAt || 0).getTime() > now) COMMUNITY_MESSAGES_CACHE.push(m);
+      else if (IS_MANAGER) doc.ref.delete().catch(err => console.error('Community expiry cleanup failed', err));
+    });
+    COMMUNITY_MESSAGES_CACHE.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    if (route.page === 'community' || route.page === 'home') render();
+  }, err => {
+    console.error('Community listener error', err);
+    communityUnsubscribe = null;
+  });
+}
+function communityPage() {
+  const messages = COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt||0).getTime() > Date.now());
+  return `<div class="screen">${header('Community')}
+   <div class="content">
+    <div class="card" style="padding:17px;margin-bottom:12px;background:linear-gradient(135deg,#1d123d,#7132d8);color:#fff">
+      <div style="font-size:10px;opacity:.72;text-transform:uppercase;letter-spacing:1px;font-weight:900">Sangam Community</div>
+      <h2 style="margin:5px 0 4px">Messages from Manager</h2>
+      <p style="margin:0;font-size:11px;opacity:.82">Important updates and announcements for all users appear here.</p>
+    </div>
+    ${messages.length ? messages.map(m => `<div class="card community-card">
+      ${IS_MANAGER ? `<button class="notif-delete-btn" onclick="event.stopPropagation();deleteCommunityMessage('${m.id}')" title="Delete message permanently">✕</button>` : ''}
+      <div style="font-size:14px;font-weight:900">${esc(m.title || 'Manager Message')}</div>
+      <div style="font-size:12px;color:#555;line-height:1.55;margin-top:7px;white-space:pre-wrap">${esc(m.message)}</div>
+      <div class="community-time">${new Date(m.createdAt).toLocaleString('en-IN')}</div>
+      <span class="community-expiry">🕒 ${esc(communityCountdownText(m))}</span>
+    </div>`).join('') : `<div class="empty"><div class="big">💬</div><h3>No community messages</h3><p>Manager announcements will appear here.</p></div>`}
+   </div>${bottom('community')}</div>`;
+}
+async function openCommunityComposer() {
+  if (!IS_MANAGER) { toast('Manager access required'); return; }
+  document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>💬 Message All Users</h3><button class="close" onclick="closeModal()">×</button></div>
+   <div class="field"><label>Title</label><input id="communityTitle" maxlength="60" placeholder="e.g. Important Update"></div>
+   <div class="field"><label>Message</label><textarea id="communityMessage" maxlength="500" placeholder="Write a message that every user should see..."></textarea></div>
+   <div class="notice">This message will be visible to all signed-in users and will auto-delete after 5 days. You can also delete it manually anytime.</div>
+   <button class="full purple" onclick="sendCommunityMessage()">📤 Send to All Users</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+async function sendCommunityMessage() {
+  if (!IS_MANAGER || !firestore) { toast('Manager access required'); return; }
+  const title = document.getElementById('communityTitle')?.value.trim() || 'Manager Message';
+  const message = document.getElementById('communityMessage')?.value.trim();
+  if (!message) { toast('Please enter a message'); return; }
+  const createdAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now()+COMMUNITY_RETENTION_MS).toISOString();
+  try {
+    await firestore.collection('communityMessages').add({title,message,createdAt,expiresAt,createdBy:'sangamdialservice@gmail.com'});
+    closeModal(); toast('✅ Message sent to all users');
+  } catch(err) { console.error('Community message send failed',err); toast('❌ Could not send community message'); }
+}
+async function deleteCommunityMessage(id) {
+  if (!IS_MANAGER || !id || !firestore) return;
+  if (!confirm('Delete this community message permanently for all users?')) return;
+  try { await firestore.collection('communityMessages').doc(id).delete(); toast('✅ Community message deleted'); }
+  catch(err) { console.error('Community delete failed',err); toast('❌ Could not delete message'); }
+}
+function openAddServiceModal() {
+  if (!IS_MANAGER) { toast('Manager access required'); return; }
+  document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>➕ Add Service</h3><button class="close" onclick="closeModal()">×</button></div>
+   <div class="field"><label>Service Name</label><input id="newServiceName" maxlength="40" placeholder="e.g. Microwave"></div>
+   <div class="field"><label>Icon</label><input id="newServiceIcon" maxlength="4" placeholder="🔧" value="🔧"></div>
+   <div class="field"><label>Description</label><textarea id="newServiceDesc" maxlength="160" placeholder="Short service description"></textarea></div>
+   <div class="notice">The new service will be stored in Firestore and will appear for users after sync.</div>
+   <button class="full purple" onclick="addServiceManager()">Add Service</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+async function addServiceManager() {
+  if (!IS_MANAGER || !firestore) { toast('Manager access required'); return; }
+  const name = document.getElementById('newServiceName')?.value.trim();
+  const icon = document.getElementById('newServiceIcon')?.value.trim() || '🔧';
+  const desc = document.getElementById('newServiceDesc')?.value.trim() || 'Professional doorstep service.';
+  if (!name) { toast('Please enter service name'); return; }
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || ('service-'+Date.now());
+  if (allServices().some(s => s.id === id || s.name.toLowerCase() === name.toLowerCase())) { toast('This service already exists'); return; }
+  const newService = { id, name, icon, price:0, desc, details:['Service & Troubleshooting','Installation / Replacement','Doorstep Expert Visit'] };
+  try {
+    await firestore.collection('appConfig').doc('services').set({
+      extraServices: firebase.firestore.FieldValue.arrayUnion(newService),
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+    DB.extraServices = [...(DB.extraServices||[]), newService];
+    saveState(); closeModal(); render(); toast('✅ Service added successfully');
+  } catch(err) { console.error('Add service failed',err); toast('❌ Could not add service. Check Firestore rules.'); }
 }
 
 function aboutPage() {
@@ -1332,6 +1489,7 @@ async function confirmBooking(serviceId) {
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const address = (DB.addresses||[])[0]?.address || '';
+  const manualMapLink = document.getElementById('bookingLocationLink')?.value.trim() || '';
   if (!DB.user?.profileComplete || !name || !phone || !address) { toast('Please complete your profile first'); showOnboarding(); return; }
   if (!/^[0-9+ -]{10,15}$/.test(phone)) { toast('Please enter a valid phone number'); return; }
   if (!address) { toast('Please add your address'); return; }
@@ -1342,10 +1500,27 @@ async function confirmBooking(serviceId) {
   const customerCode = String(name).trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() || 'USER';
   const userServiceOrders = (DB.bookings||[]).filter(x => x.serviceId === serviceId && String(x.name||'').trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').toUpperCase() === customerCode);
   const serial = userServiceOrders.length + 1;
+
+  let locationLink = manualMapLink, locationLat = null, locationLng = null;
+  if (!locationLink && navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve,reject) => navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:12000,maximumAge:60000}));
+      locationLat = pos.coords.latitude; locationLng = pos.coords.longitude;
+      locationLink = `https://www.google.com/maps/search/?api=1&query=${locationLat},${locationLng}`;
+    } catch(err) {
+      locationLink = (DB.addresses||[])[0]?.mapUrl || '';
+      if (!locationLink) { toast('Please allow location access or paste a Google Maps link.'); return; }
+    }
+  } else if (!locationLink) {
+    locationLink = (DB.addresses||[])[0]?.mapUrl || '';
+    if (!locationLink) { toast('Please paste a Google Maps link.'); return; }
+  }
+
   const createdAt = new Date().toISOString();
   const booking = {
     id:`SDS_${serviceCode}_${serial}`, serviceId, date:getSelected('date'), time:getSelected('time'),
     address, name, phone, note:document.getElementById('note').value.trim(), total:s.price,
+    locationLink, locationLat, locationLng,
     status:'Pending', createdAt, expiresAt:new Date(Date.now()+BOOKING_RETENTION_MS).toISOString()
   };
 
@@ -1367,22 +1542,17 @@ async function confirmBooking(serviceId) {
       uid:AUTH_UID, user:{...DB.user}, addresses:DB.addresses||[], bookings:DB.bookings,
       notifications:DB.notifications, settings:DB.settings||{notifications:true}, updatedAt:notifCreatedAt
     }, {merge:true});
-
-    saveState();
-    openBookingSuccess(booking);
-    openOrderMessages(booking);
-    updateAllBadges();
+    saveState(); openBookingSuccess(booking); openOrderMessages(booking); updateAllBadges();
   } catch(err) {
     console.error('Booking cloud save failed',err);
     DB.bookings = DB.bookings.filter(b=>b.id!==booking.id);
     DB.notifications = DB.notifications.filter(n=>n.bookingId!==booking.id);
-    saveState();
-    toast('❌ Booking could not be sent to manager. Please try again.');
+    saveState(); toast('❌ Booking could not be sent to manager. Please try again.');
   }
 }
 
 function openBookingSuccess(b) {
- document.getElementById('sheet').innerHTML = `<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div></div>
+ document.getElementById('sheet').innerHTML = `<div style="text-align:center;padding:15px 4px 7px"><div style="font-size:58px">✅</div><h2 style="margin:9px 0">Booking Confirmed!</h2><p style="color:#777;font-size:12px">Your order has been saved successfully.</p><div class="card" style="padding:13px;text-align:left;margin:14px 0"><div class="summary-line"><span>Order ID</span><b>${esc(b.id)}</b></div><div class="summary-line"><span>Service</span><b>${esc(service(b.serviceId).name)}</b></div><div class="summary-line"><span>Date & Time</span><b>${esc(b.date)} • ${esc(b.time)}</b></div><div class="summary-line"><span>Customer</span><b>${esc(b.name)}</b></div><div class="summary-line"><span>Address</span><b style="max-width:220px;text-align:right">${esc(b.address)}</b></div><div class="summary-line"><span>Location</span><b style="max-width:220px;text-align:right">${b.locationLink ? `<a href="${esc(b.locationLink)}" target="_blank" rel="noopener" style="color:#2877d1;text-decoration:none">Open Google Maps ↗</a>` : 'Not available'}</b></div></div>
  <div class="booking-actions">${contactButtons(b)}</div>
  <div class="order-share-note">WhatsApp/SMS opens with a ready-to-send order message. Your browser will ask for confirmation before sending.</div>
  <button class="full purple" style="margin-top:12px" onclick="closeModal();go('bookings')">View My Booking</button></div>`;
@@ -1390,7 +1560,7 @@ function openBookingSuccess(b) {
 }
 function orderMessage(b) {
  const s = service(b.serviceId);
- return `SANGAM DIAL SERVICE\nOrder No: ${b.id}\nOrder Type: ${s.name} Service\nCustomer Name: ${b.name}\nCustomer Phone: ${b.phone}\nDate: ${b.date}\nTime: ${b.time}\nAddress: ${b.address}\nIssue / Note: ${b.note || 'Not provided'}\nPrice: To be confirmed on contact\nStatus: ${b.status}${b.rejectionReason ? `\nRejection Reason: ${b.rejectionReason}` : ''}\nPlease contact me regarding this service booking.`;
+ return `SANGAM DIAL SERVICE\nOrder No: ${b.id}\nOrder Type: ${s.name} Service\nCustomer Name: ${b.name}\nCustomer Phone: ${b.phone}\nDate: ${b.date}\nTime: ${b.time}\nAddress: ${b.address}\nIssue / Note: ${b.note || 'Not provided'}\n📍 Google Maps Location: ${b.locationLink || 'Not provided'}\nPrice: To be confirmed on contact\nStatus: ${b.status}${b.rejectionReason ? `\nRejection Reason: ${b.rejectionReason}` : ''}\nPlease contact me regarding this service booking.`;
 }
 function openOrderMessages(b) {
  const msg = encodeURIComponent(orderMessage(b));
@@ -1468,7 +1638,7 @@ function openMenu() {
  <button class="menu-row" onclick="closeModal();go('bookings')"><div class="mi">▣</div><div><b>My Bookings</b><small>Track all orders</small></div></button>
  <button class="menu-row" onclick="closeModal();go('support')"><div class="mi">◉</div><div><b>Support</b><small>Contact support</small></div></button>
  <button class="menu-row" onclick="closeModal();go('profile')"><div class="mi">👤</div><div><b>Profile</b><small>Personal details & addresses</small></div></button>
- ${IS_MANAGER ? `<button class="menu-row" onclick="closeModal();go('manager')"><div class="mi">📊</div><div><b>Manager Panel</b><small>Manage all bookings</small></div></button>` : ''}`;
+ ${IS_MANAGER ? `<button class="menu-row" onclick="closeModal();go('manager')"><div class="mi">📊</div><div><b>All Bookings</b><small>Manage all customer bookings</small></div></button><button class="menu-row" onclick="closeModal();openAddServiceModal()"><div class="mi">➕</div><div><b>Add Service</b><small>Add a new service</small></div></button><button class="menu-row" onclick="closeModal();openCommunityComposer()"><div class="mi">💬</div><div><b>Message All Users</b><small>Send a community announcement</small></div></button>` : ''}`;
  modal.classList.add('open', 'menu-modal');
 }
 function editProfile() {
@@ -1537,7 +1707,7 @@ function importBackup(file) {
  r.readAsText(file);
 }
 function clearAllData() {
- document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>Reset Local Data?</h3><button class="close" onclick="closeModal()">×</button></div><p style="font-size:12px;color:#666">This will delete bookings, profile data, addresses, notifications and support requests from this browser.</p><button class="full pink" onclick="DB = { user: { name: 'Guest', phone: '', email: '', avatar: 'G', profileComplete: false }, addresses: [], bookings: [], notifications: [], support: [], settings: { notifications: true }, meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }; saveState(); closeModal(); render(); toast('Local data reset');">Yes, Reset Everything</button>`;
+ document.getElementById('sheet').innerHTML = `<div class="sheet-head"><h3>Reset Local Data?</h3><button class="close" onclick="closeModal()">×</button></div><p style="font-size:12px;color:#666">This will delete bookings, profile data, addresses, notifications and support requests from this browser.</p><button class="full pink" onclick="DB = { user: { name: 'Guest', phone: '', email: '', avatar: 'G', profileComplete: false }, addresses: [], bookings: [], notifications: [], support: [], extraServices: DB.extraServices || [], settings: { notifications: true }, meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }; saveState(); closeModal(); render(); toast('Local data reset');">Yes, Reset Everything</button>`;
  document.getElementById('modal').classList.add('open');
 }
 function callSupport() { window.location.href = `tel:${BUSINESS_PHONE}`; }
@@ -1589,7 +1759,7 @@ async function sendSupport() {
 }
 function searchServices(q) {
  q = q.toLowerCase().trim();
- const list = SERVICES.filter(s => !q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q));
+ const list = allServices().filter(s => !q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q));
  document.getElementById('categories').innerHTML = list.length ? list.map(s => `<button class="cat" onclick="go('service','${s.id}')"><div class="service-thumb">${serviceArt(s,true)}</div><div class="cat-name"><b>${esc(s.name)}</b><small>VIEW →</small></div></button>`).join('') : `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888;font-size:12px">No matching service found.</div>`;
 }
 function showOnboarding() {
@@ -1692,7 +1862,7 @@ function sendWhatsAppToCustomer(phone, message) {
 function getCustomerWhatsAppMessage(b, status, reason) {
  const s = service(b.serviceId);
  if (status === 'Confirmed') {
-  return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
+  return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n🗺️ Location: ${b.locationLink || 'Not provided'}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
  } else {
   return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
  }
@@ -1856,6 +2026,11 @@ window.importBackup = importBackup;
 window.clearAllData = clearAllData;
 window.callSupport = callSupport;
 window.sendSupport = sendSupport;
+window.openCommunityComposer = openCommunityComposer;
+window.sendCommunityMessage = sendCommunityMessage;
+window.deleteCommunityMessage = deleteCommunityMessage;
+window.openAddServiceModal = openAddServiceModal;
+window.addServiceManager = addServiceManager;
 window.searchServices = searchServices;
 window.selectChoice = selectChoice;
 window.confirmBooking = confirmBooking;
