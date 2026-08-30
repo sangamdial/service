@@ -558,7 +558,7 @@ const SERVICES = [
 ];
 const BUSINESS_WHATSAPP = "917859056418";
 const BUSINESS_PHONE = "7859056418";
-const APK_DOWNLOAD_URL = "PASTE_YOUR_APK_LINK_HERE";
+const APK_DOWNLOAD_URL = "./dialservice.apk";
 const POPULAR_SERVICES = ["ac","tv","cctv","plumbing","washing","electrician"];
 const BOOKING_RETENTION_MS = 20*24*60*60*1000;
 const REPORT_RETENTION_MS = 20*24*60*60*1000;
@@ -1397,8 +1397,8 @@ function aboutPage() {
    <div class="card" style="padding:16px;margin-bottom:8px">
     <div style="font-size:10px;color:#7132d8;font-weight:900;text-transform:uppercase;letter-spacing:1px">Mobile App</div>
     <h3 style="margin:5px 0 5px">Download the App</h3>
-    <p style="margin:0 0 11px;font-size:10px;color:#888">Replace <b>PASTE_YOUR_APK_LINK_HERE</b> in the code with your APK link.</p>
-    <a href="${APK_DOWNLOAD_URL}" target="_blank" rel="noopener" class="full purple" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">⬇ Download APK</a>
+    <p style="margin:0 0 11px;font-size:10px;color:#888">Download the official Dial Service Android app.</p>
+    <a href="${APK_DOWNLOAD_URL}" download="dialservice.apk" class="full purple" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">⬇ Download APK</a>
    </div>
   </div>
   ${bottom('profile')}</div>`;
@@ -1482,7 +1482,7 @@ function profilePage() {
   <div class="card" style="padding:14px;margin-top:12px">
    <div style="font-size:10px;color:#7132d8;font-weight:900;text-transform:uppercase;letter-spacing:1px">Mobile App</div>
    <div style="font-size:12px;font-weight:900;margin:5px 0">Download APK</div>
-   <a href="${APK_DOWNLOAD_URL}" target="_blank" rel="noopener" class="full purple" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">⬇ Download APK</a>
+   <a href="${APK_DOWNLOAD_URL}" download="dialservice.apk" class="full purple" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">⬇ Download APK</a>
   </div>
   <div style="text-align:center;color:#999;font-size:10px;margin:18px">Dial Service • Local-first edition<br>Data is stored in this browser's Local Storage.</div>
  </div>${bottom('profile')}</div>`;
