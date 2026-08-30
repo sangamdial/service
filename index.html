@@ -410,6 +410,24 @@ body{background:radial-gradient(circle at 10% 10%,#dfe8ff 0,#eef0f6 28%,#e9eaf0 
 @media(max-width:600px){.splash-core-wrap{width:235px;height:235px}.splash-orbit{width:280px;height:280px;margin:-140px}.orbit-b{width:320px;height:320px;margin:-160px}.orbit-c{width:360px;height:360px;margin:-180px}.splash-brand{font-size:29px}.splash-tagline{font-size:8px;letter-spacing:1.2px}.splash-tagline span{width:15px}}
 @media(prefers-reduced-motion:reduce){.auth-loading *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
+/* --- COMMUNITY TOP BUTTON / STABLE NAV / MANAGER UI --- */
+.header-actions,.home-right-actions{display:flex;align-items:center;gap:8px}
+.community-top-btn{position:relative}
+.community-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:#16a765;color:#fff;font-size:8px;font-weight:900;line-height:17px;text-align:center;border:2px solid rgba(255,255,255,.45)}
+.menu-divider{font-size:9px;color:#8a7aa8;font-weight:900;letter-spacing:1.2px;padding:13px 5px 5px}
+.manager-menu-row{border-color:#e6dcfa!important;background:linear-gradient(145deg,#fff,#faf7ff)!important}
+.manager-home-action{position:relative;overflow:hidden}
+.manager-home-action:active{transform:scale(.985)}
+.manager-home-action b{font-weight:900}
+@media(max-width:699px){
+ .bottom-nav{grid-template-columns:repeat(5,1fr)!important}
+}
+@media(min-width:900px){
+ .page-head .header-actions{margin-left:auto}
+ .home-right-actions{margin-left:auto}
+ .community-top-btn{display:grid!important}
+}
+
 /* --- NEW MANAGER / COMMUNITY / LOCATION UI --- */
 .manager-home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
 .manager-home-action{min-height:96px;border-radius:18px;padding:15px;text-align:left;border:1px solid #e9e5f4;background:#fff;box-shadow:0 8px 22px rgba(50,40,100,.07);cursor:pointer;transition:.22s}
@@ -598,9 +616,14 @@ function bookingCountdownText(b) {
 }
 function go(page, svc) { route = { page, service: svc }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); if (page === 'home') { setTimeout(() => { renderPopular(); startPopularSlider(); }, 60); } else { clearInterval(popularTimer); } }
 function closeModal() { document.getElementById('modal').classList.remove('open', 'menu-modal'); }
+function updateCommunityBadges() {
+ const count = COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt||0).getTime() > Date.now()).length;
+ document.querySelectorAll('.community-badge').forEach(el => el.textContent = count);
+}
 function updateAllBadges() {
  const count = (DB.notifications || []).filter(n => !n.read).length;
  document.querySelectorAll('.notif-badge').forEach(el => el.textContent = count);
+ updateCommunityBadges();
 }
 
 // --- SAVE/LOAD STATE ---
@@ -952,10 +975,9 @@ function switchManagerTab(tab) {
 
 async function loadManagerPanel() {
   if (!IS_MANAGER) { toast('Manager access is restricted'); go('profile'); return; }
-  const box = document.getElementById('managerBookings');
-  if (!box) return;
   if (!firestore) {
-    box.innerHTML = '<div class="empty"><div class="big">☁️</div><h3>Firestore unavailable</h3><p>Please check Firebase setup.</p></div>';
+    const box = document.getElementById('managerBookings');
+    if (box) box.innerHTML = '<div class="empty"><div class="big">☁️</div><h3>Firestore unavailable</h3><p>Please check Firebase setup.</p></div>';
     return;
   }
   if (managerUsersUnsubscribe) return;
@@ -979,10 +1001,12 @@ async function loadManagerPanel() {
     reports.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     MANAGER_BOOKINGS_CACHE = rows;
     MANAGER_REPORTS_CACHE = reports;
-    renderManagerBookings(rows);
+    if (route.page === 'manager') renderManagerBookings(rows);
+    else if (route.page === 'home' && IS_MANAGER) render();
   }, err => {
     console.error('Manager realtime listener error', err);
-    box.innerHTML = '<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading customer records.</p></div>';
+    const box = document.getElementById('managerBookings');
+    if (box) box.innerHTML = '<div class="empty"><div class="big">🔒</div><h3>Access blocked</h3><p>Firestore security rules are preventing the manager from reading customer records.</p></div>';
     managerUsersUnsubscribe = null;
   });
 }
@@ -1081,14 +1105,21 @@ function filterManagerBookings(q) {
 
 // --- RENDER PAGES ---
 function header(title, back = 'home') {
- return `<div class="top-gradient page-head"><button class="back" onclick="go('${back}')">‹</button><h2>${title}</h2><button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHeader">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button></div>`;
+ const communityCount = COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt||0).getTime() > Date.now()).length;
+ return `<div class="top-gradient page-head">
+   <button class="back" onclick="go('${back}')">‹</button>
+   <h2>${title}</h2>
+   <div class="header-actions">
+    <button class="icon-btn community-top-btn" onclick="go('community')" aria-label="Open Community">💬<span class="community-badge" id="communityBadgeHeader">${communityCount}</span></button>
+    <button class="icon-btn" onclick="openNotifications()" aria-label="Open Notifications">🔔<span class="notif-badge" id="notifBadgeHeader">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button>
+   </div>
+  </div>`;
 }
 function bottom(active) {
  return `<nav class="bottom-nav">
   <button class="nav-item ${active==='home'?'active':''}" onclick="go('home')"><span>⌂</span>Home</button>
   <button class="nav-item ${active==='bookings'?'active':''}" onclick="go('bookings')"><span>▣</span>Bookings</button>
   <button class="nav-item ${active==='support'?'active':''}" onclick="go('support')"><span>◉</span>Support</button>
-  <button class="nav-item ${active==='community'?'active':''}" onclick="go('community')"><span>💬</span>Community</button>
   <button class="nav-item ${active==='about'?'active':''}" onclick="go('about')"><span>ⓘ</span>About Us</button>
   <button class="nav-item ${active==='profile'?'active':''}" onclick="go('profile')"><span>♙</span>Profile</button>
  </nav>`;
@@ -1131,8 +1162,11 @@ function managerHome() {
   const reports = MANAGER_REPORTS_CACHE.length;
   return `<div class="screen">
    <div class="top-gradient home-head">
-    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button>
-    <button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHome">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button></div>
+    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open manager menu">☰</button>
+    <div class="home-right-actions">
+     <button class="icon-btn community-top-btn" onclick="go('community')" aria-label="Open Community">💬<span class="community-badge">${COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt||0).getTime() > Date.now()).length}</span></button>
+     <button class="icon-btn" onclick="openNotifications()" aria-label="Open Notifications">🔔<span class="notif-badge" id="notifBadgeHome">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button>
+    </div></div>
     <div class="hello compact-hello">Manager Dashboard 👋</div>
     <div style="margin-top:7px;font-size:11px;opacity:.85">Sangam Dial Service • Management</div>
    </div>
@@ -1154,7 +1188,7 @@ function managerHome() {
     </div>
     <div class="section-title">Community</div>
     <button class="card banner" style="width:100%;text-align:left" onclick="go('community')"><div><h3>Open Community</h3><p>View the messages currently visible to all users.</p></div><div class="arrow">›</div></button>
-   </div>${bottom('home')}
+   </div>
   </div>`;
 }
 
@@ -1164,7 +1198,10 @@ function home() {
  return `<div class="screen">
   <div class="top-gradient home-head">
    <div class="row home-controls"><button class="icon-btn menu-trigger" onclick="openMenu()" aria-label="Open menu">☰</button>
-   <button class="icon-btn" onclick="openNotifications()">🔔<span class="notif-badge" id="notifBadgeHome">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button>
+   <div class="home-right-actions">
+    <button class="icon-btn community-top-btn" onclick="go('community')" aria-label="Open Community">💬<span class="community-badge">${COMMUNITY_MESSAGES_CACHE.filter(m => new Date(m.expiresAt||0).getTime() > Date.now()).length}</span></button>
+    <button class="icon-btn" onclick="openNotifications()" aria-label="Open Notifications">🔔<span class="notif-badge" id="notifBadgeHome">${(DB.notifications||[]).filter(n=>!n.read).length}</span></button>
+   </div>
    </div>
    <div class="hello compact-hello">Hello, ${esc(DB.user.name||'User')} 👋</div>
    <div class="search"><input id="searchInput" placeholder="Search for a service..." oninput="searchServices(this.value)"><button>⌕</button></div>
@@ -1207,6 +1244,19 @@ function communityCountdownText(m) {
   if (days > 0) return `Auto-delete in ${days} day${days===1?'':'s'}`;
   return `Auto-delete in ${Math.max(1,hours)} hour${hours===1?'':'s'}`;
 }
+async function loadCloudServices() {
+  if (!firestore) return;
+  try {
+    const snap = await firestore.collection('appConfig').doc('services').get();
+    const extras = snap.exists && Array.isArray(snap.data()?.extraServices) ? snap.data().extraServices : [];
+    DB.extraServices = extras;
+    saveState();
+    if (route.page === 'home') render();
+  } catch(err) {
+    console.error('Cloud services load failed', err);
+  }
+}
+
 function startCommunityListener() {
   if (!firestore || !AUTH_UID || communityUnsubscribe) return;
   communityUnsubscribe = firestore.collection('communityMessages').onSnapshot(snap => {
@@ -1218,6 +1268,7 @@ function startCommunityListener() {
       else if (IS_MANAGER) doc.ref.delete().catch(err => console.error('Community expiry cleanup failed', err));
     });
     COMMUNITY_MESSAGES_CACHE.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    updateCommunityBadges();
     if (route.page === 'community' || route.page === 'home') render();
   }, err => {
     console.error('Community listener error', err);
@@ -1231,7 +1282,8 @@ function communityPage() {
     <div class="card" style="padding:17px;margin-bottom:12px;background:linear-gradient(135deg,#1d123d,#7132d8);color:#fff">
       <div style="font-size:10px;opacity:.72;text-transform:uppercase;letter-spacing:1px;font-weight:900">Sangam Community</div>
       <h2 style="margin:5px 0 4px">Messages from Manager</h2>
-      <p style="margin:0;font-size:11px;opacity:.82">Important updates and announcements for all users appear here.</p>
+      <p style="margin:0;font-size:11px;opacity:.82">Important updates and announcements appear here instantly for all signed-in users.</p>
+      ${IS_MANAGER ? `<button class="full" style="margin-top:12px;background:#fff;color:#7132d8;font-weight:900" onclick="openCommunityComposer()">📢 Send New Message</button>` : ''}
     </div>
     ${messages.length ? messages.map(m => `<div class="card community-card">
       ${IS_MANAGER ? `<button class="notif-delete-btn" onclick="event.stopPropagation();deleteCommunityMessage('${m.id}')" title="Delete message permanently">✕</button>` : ''}
@@ -1357,6 +1409,11 @@ function bookPage(id) {
       <div class="location-main" onclick="chooseAddress()"><div class="location-pin">⌖</div><div style="flex:1"><b>${esc((DB.addresses||[])[0]?.label||'Home')}</b><div style="font-size:11px;color:#777;margin-top:3px" id="addressText">${esc((DB.addresses||[])[0]?.address||'Add your address')}</div></div><b>›</b></div>
       <button class="current-location-btn" onclick="useCurrentLocation(event)">◎ Use Current Location</button>
       <div id="locationMapHint" class="map-hint">${(DB.addresses||[])[0]?.lat ? 'Current location saved • Open in Google Maps' : 'Use GPS to automatically add your current location'}</div>
+      <div class="field" style="margin:10px 0 0">
+       <label>Google Maps Link <small>(Optional)</small></label>
+       <input id="bookingLocationLink" type="url" inputmode="url" placeholder="Paste another location link, or leave blank for current GPS">
+       <div style="font-size:9px;color:#888;margin-top:5px">If you leave this blank, the booking will use your current GPS location.</div>
+      </div>
     </div>
    <div class="section-title" style="margin-left:0">Customer Details</div>
    <div class="field"><label>Name</label><input id="custName" value="${esc(DB.user.name)}" placeholder="Your full name"></div>
@@ -1560,7 +1617,36 @@ function openBookingSuccess(b) {
 }
 function orderMessage(b) {
  const s = service(b.serviceId);
- return `SANGAM DIAL SERVICE\nOrder No: ${b.id}\nOrder Type: ${s.name} Service\nCustomer Name: ${b.name}\nCustomer Phone: ${b.phone}\nDate: ${b.date}\nTime: ${b.time}\nAddress: ${b.address}\nIssue / Note: ${b.note || 'Not provided'}\n📍 Google Maps Location: ${b.locationLink || 'Not provided'}\nPrice: To be confirmed on contact\nStatus: ${b.status}${b.rejectionReason ? `\nRejection Reason: ${b.rejectionReason}` : ''}\nPlease contact me regarding this service booking.`;
+ return [
+  '*SANGAM DIAL SERVICE*',
+  '',
+  '*BOOKING REQUEST*',
+  '',
+  '*ORDER DETAILS*',
+  `Order No: ${b.id}`,
+  `Service: ${s.name} Service`,
+  `Date: ${b.date}`,
+  `Time: ${b.time}`,
+  '',
+  '*CUSTOMER DETAILS*',
+  `Name: ${b.name}`,
+  `Phone: ${b.phone}`,
+  `Address: ${b.address}`,
+  '',
+  '*SERVICE NOTE*',
+  `${b.note || 'Not provided'}`,
+  '',
+  '📍 *GOOGLE MAPS LOCATION*',
+  `${b.locationLink || 'Not provided'}`,
+  '',
+  '*PRICE*',
+  'To be confirmed on contact',
+  '',
+  '*STATUS*',
+  `${b.status}${b.rejectionReason ? `\n\n*REJECTION REASON*\n${b.rejectionReason}` : ''}`,
+  '',
+  'Please contact me regarding this service booking.'
+ ].join('\n');
 }
 function openOrderMessages(b) {
  const msg = encodeURIComponent(orderMessage(b));
@@ -1637,8 +1723,9 @@ function openMenu() {
  <button class="menu-row" onclick="closeModal();go('home')"><div class="mi">⌂</div><div><b>Home</b><small>Browse all services</small></div></button>
  <button class="menu-row" onclick="closeModal();go('bookings')"><div class="mi">▣</div><div><b>My Bookings</b><small>Track all orders</small></div></button>
  <button class="menu-row" onclick="closeModal();go('support')"><div class="mi">◉</div><div><b>Support</b><small>Contact support</small></div></button>
+ <button class="menu-row" onclick="closeModal();go('community')"><div class="mi">💬</div><div><b>Community</b><small>Manager announcements for everyone</small></div></button>
  <button class="menu-row" onclick="closeModal();go('profile')"><div class="mi">👤</div><div><b>Profile</b><small>Personal details & addresses</small></div></button>
- ${IS_MANAGER ? `<button class="menu-row" onclick="closeModal();go('manager')"><div class="mi">📊</div><div><b>All Bookings</b><small>Manage all customer bookings</small></div></button><button class="menu-row" onclick="closeModal();openAddServiceModal()"><div class="mi">➕</div><div><b>Add Service</b><small>Add a new service</small></div></button><button class="menu-row" onclick="closeModal();openCommunityComposer()"><div class="mi">💬</div><div><b>Message All Users</b><small>Send a community announcement</small></div></button>` : ''}`;
+ ${IS_MANAGER ? `<div class="menu-divider">MANAGER</div><button class="menu-row manager-menu-row" onclick="closeModal();go('manager')"><div class="mi">📊</div><div><b>Manager Dashboard</b><small>All bookings, reports & controls</small></div></button><button class="menu-row manager-menu-row" onclick="closeModal();openAddServiceModal()"><div class="mi">➕</div><div><b>Add Service</b><small>Add a new service</small></div></button><button class="menu-row manager-menu-row" onclick="closeModal();openCommunityComposer()"><div class="mi">📢</div><div><b>Send Community Message</b><small>Send instantly to every user</small></div></button>` : ''}`;
  modal.classList.add('open', 'menu-modal');
 }
 function editProfile() {
@@ -1861,11 +1948,33 @@ function sendWhatsAppToCustomer(phone, message) {
 }
 function getCustomerWhatsAppMessage(b, status, reason) {
  const s = service(b.serviceId);
- if (status === 'Confirmed') {
-  return `✅ Your booking has been CONFIRMED!\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n🗺️ Location: ${b.locationLink || 'Not provided'}\n👤 Customer: ${b.name}\n\nThank you for choosing Sangam Dial Service!\nFor any query, contact: 7859056418`;
- } else {
-  return `❌ Your booking has been REJECTED.\n\n📋 Order ID: ${b.id}\n🔧 Service: ${s.name}\n📅 Date: ${b.date}\n⏰ Time: ${b.time}\n📍 Address: ${b.address}\n👤 Customer: ${b.name}\n\nReason: ${reason || 'Not specified'}\n\nWe apologize for the inconvenience.\nFor any query, contact: 7859056418`;
- }
+ const heading = status === 'Confirmed' ? '✅ *BOOKING CONFIRMED*' : '❌ *BOOKING REJECTED*';
+ const body = [
+  heading,
+  '',
+  '*SANGAM DIAL SERVICE*',
+  '',
+  '*ORDER DETAILS*',
+  `Order ID: ${b.id}`,
+  `Service: ${s.name}`,
+  `Date: ${b.date}`,
+  `Time: ${b.time}`,
+  '',
+  '*CUSTOMER DETAILS*',
+  `Name: ${b.name}`,
+  `Phone: ${b.phone || 'Not provided'}`,
+  `Address: ${b.address}`,
+  '',
+  `📍 *GOOGLE MAPS LOCATION*`,
+  `${b.locationLink || 'Not provided'}`,
+  '',
+  status === 'Rejected' ? `*REJECTION REASON*\n${reason || 'Not specified'}\n` : '',
+  status === 'Confirmed' ? 'Thank you for choosing Sangam Dial Service!' : 'We apologize for the inconvenience.',
+  '',
+  '*CONTACT*',
+  '7859056418'
+ ].filter((line, i, arr) => !(line === '' && arr[i-1] === ''));
+ return body.join('\n');
 }
 function needsOnboarding() {
  return !(DB.user?.profileComplete && DB.user.name?.trim() && DB.user.phone?.trim() && (DB.addresses||[])[0]?.address?.trim());
@@ -1874,16 +1983,17 @@ function needsOnboarding() {
 function render() {
  const app = document.getElementById('app');
  let out = '';
- if (route.page === 'home') out = home();
+ if (route.page === 'home') out = IS_MANAGER ? managerHome() : home();
  else if (route.page === 'service') out = servicePage(route.service);
  else if (route.page === 'book') out = bookPage(route.service);
  else if (route.page === 'bookings') out = bookingsPage();
  else if (route.page === 'manager') out = IS_MANAGER ? managerPage() : (toast('Manager access is restricted'), profilePage());
  else if (route.page === 'profile') out = profilePage();
  else if (route.page === 'support') out = supportPage();
+ else if (route.page === 'community') out = communityPage();
  else if (route.page === 'about') out = aboutPage();
  app.innerHTML = out;
- if (route.page === 'manager') setTimeout(loadManagerPanel, 50);
+ if (route.page === 'manager' || (IS_MANAGER && route.page === 'home')) setTimeout(loadManagerPanel, 50);
  setTimeout(updateAllBadges, 100);
 }
 
@@ -1943,7 +2053,10 @@ function initFirebaseAuth() {
      });
     }
     render();
-    if (!IS_MANAGER) startCustomerRealtimeListener();
+    startCommunityListener();
+    loadCloudServices();
+    if (IS_MANAGER) loadManagerPanel();
+    else startCustomerRealtimeListener();
     startNotificationCleanupTimer();
     if (needsOnboarding()) showOnboarding();
     startPopularSlider();
@@ -1951,7 +2064,10 @@ function initFirebaseAuth() {
     console.error('Firestore load error', err);
     toast('Could not load cloud data. Using local data.');
     render();
-    if (!IS_MANAGER) startCustomerRealtimeListener();
+    startCommunityListener();
+    loadCloudServices();
+    if (IS_MANAGER) loadManagerPanel();
+    else startCustomerRealtimeListener();
     startNotificationCleanupTimer();
     if (needsOnboarding()) showOnboarding();
     startPopularSlider();
@@ -1961,6 +2077,8 @@ function initFirebaseAuth() {
    IS_MANAGER = false;
    if (managerUsersUnsubscribe) { managerUsersUnsubscribe(); managerUsersUnsubscribe=null; }
    if (customerUserUnsubscribe) { customerUserUnsubscribe(); customerUserUnsubscribe=null; }
+   if (communityUnsubscribe) { communityUnsubscribe(); communityUnsubscribe=null; }
+   COMMUNITY_MESSAGES_CACHE = [];
    clearInterval(notificationCleanupTimer); notificationCleanupTimer=null;
    document.getElementById('app').style.display = 'none';
    document.getElementById('authLoading')?.classList.add('hide');
