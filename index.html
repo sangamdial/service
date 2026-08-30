@@ -981,7 +981,13 @@ async function loadManagerPanel() {
     if (box) box.innerHTML = '<div class="empty"><div class="big">☁️</div><h3>Firestore unavailable</h3><p>Please check Firebase setup.</p></div>';
     return;
   }
-  if (managerUsersUnsubscribe) return;
+  if (managerUsersUnsubscribe) {
+    // The manager listener may already be active from the manager homepage.
+    // Render the cached bookings immediately when opening All Bookings instead
+    // of waiting for another Firestore snapshot or a tab click.
+    if (route.page === 'manager') renderManagerBookings(MANAGER_BOOKINGS_CACHE);
+    return;
+  }
 
   managerUsersUnsubscribe = firestore.collection('users').onSnapshot(async snap => {
     const rows = [], reports = [], cleanupWrites = [], now = Date.now();
